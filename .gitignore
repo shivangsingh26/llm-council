@@ -1,0 +1,27 @@
+# Documentation (internal)
+docs/
+
+# Virtual environment
+.venv
+
+# Environment variables (secrets!)
+.env
+
+# Claude Code
+.claude
+
+# Research outputs (local data)
+outputs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
