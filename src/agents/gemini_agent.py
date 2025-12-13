@@ -1,7 +1,7 @@
 """
 Gemini Research Agent
 =====================
-Research agent powered by Google's Gemini AI.
+Research agent powered by Google's Gemini API
 
 Learning Points:
 - Implementing abstract base classes
