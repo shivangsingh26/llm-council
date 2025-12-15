@@ -20,8 +20,30 @@ __pycache__/
 *.pyd
 .Python
 *.egg-info/
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Next.js / Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/.vercel
+frontend/.turbo
+
+# Frontend environment
+frontend/.env*.local
+
+# Frontend debugging
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Frontend OS
+frontend/.DS_Store
+frontend/Thumbs.db
