@@ -23,7 +23,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional, List
 
-from src.models.schemas import ResearchResponse, ResearchDomain
+from src.models.schemas import ResearchResponse, ResearchDomain, ComparisonResult
 
 
 class OutputManager:
@@ -63,6 +63,7 @@ class OutputManager:
         Creates:
         - Base outputs directory
         - Subdirectory for each domain
+        - Council comparisons directory with domain subdirectories
 
         Learning: mkdir(parents=True, exist_ok=True) means:
         - parents=True: Create parent directories if needed
@@ -75,6 +76,13 @@ class OutputManager:
         for domain in ResearchDomain:
             domain_dir = self.base_dir / domain.value
             domain_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create council comparisons directory with domain subdirectories
+        council_dir = self.base_dir / "council_comparisons"
+        council_dir.mkdir(parents=True, exist_ok=True)
+        for domain in ResearchDomain:
+            council_domain_dir = council_dir / domain.value
+            council_domain_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"✓ Output directories ready at: {self.base_dir.absolute()}")
 
@@ -130,6 +138,60 @@ class OutputManager:
 
         except Exception as e:
             print(f"❌ Failed to save output: {e}")
+            raise
+
+    def save_comparison(
+        self,
+        comparison: ComparisonResult,
+        include_metadata: bool = True
+    ) -> Path:
+        """
+        Save a council comparison result to a JSON file.
+
+        Args:
+            comparison: The comparison result to save
+            include_metadata: Include extra metadata in JSON (default: True)
+
+        Returns:
+            Path: Path to the saved file
+
+        Raises:
+            IOError: If file cannot be written
+
+        Learning: Council comparisons are saved to council_comparisons/{domain}/
+        """
+
+        # Generate filename from timestamp and query
+        filename = self._generate_filename(comparison.query, comparison.timestamp)
+
+        # Get council domain-specific directory
+        council_dir = self.base_dir / "council_comparisons" / comparison.domain.value
+
+        # Full file path
+        file_path = council_dir / filename
+
+        # Convert Pydantic model to dictionary
+        data = comparison.model_dump()
+
+        # Add extra metadata if requested
+        if include_metadata:
+            data['_metadata'] = {
+                'saved_at': datetime.now().isoformat(),
+                'file_path': str(file_path),
+                'domain_directory': comparison.domain.value,
+                'type': 'council_comparison'
+            }
+
+        # Write to file
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+
+            print(f"🏛️  Saved council comparison: {file_path.name}")
+            return file_path
+
+        except Exception as e:
+            print(f"❌ Failed to save comparison: {e}")
             raise
 
     def load_research(self, file_path: str) -> dict:
