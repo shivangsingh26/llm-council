@@ -13,7 +13,7 @@ Learning: Instead of parsing raw text, we get structured objects!
 """
 
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 from enum import Enum
 
@@ -139,25 +139,109 @@ class ResearchResponse(BaseModel):
 
 class ComparisonResult(BaseModel):
     """
-    Future use: When comparing responses from multiple models.
+    Aggregated result from multiple AI agents.
 
-    You'll use this in Phase 2 when building the Council!
+    Used by the Council Orchestrator to compare and synthesize
+    responses from multiple models.
+
+    This enables:
+    - Seeing all model responses side-by-side
+    - Identifying consensus (where models agree)
+    - Highlighting disagreements (where models differ)
+    - Creating a synthesized final answer
     """
 
-    query: str
-    responses: List[ResearchResponse]
-    consensus: Optional[str] = None
-    disagreements: Optional[List[str]] = None
-    final_answer: Optional[str] = None
+    # Core data
+    query: str = Field(
+        description="The research question asked"
+    )
+
+    domain: ResearchDomain = Field(
+        description="Research domain"
+    )
+
+    # Individual responses from each model
+    responses: Dict[str, ResearchResponse] = Field(
+        description="Map of model name to response",
+        examples=[{"gpt-4o": {}, "gemini-2.5-flash": {}}]
+    )
+
+    # Comparison metrics
+    total_agents: int = Field(
+        description="Total number of agents queried"
+    )
+
+    successful_agents: int = Field(
+        description="Number of agents that responded successfully"
+    )
+
+    failed_agents: List[str] = Field(
+        default_factory=list,
+        description="List of models that failed to respond"
+    )
+
+    # Analysis
+    consensus_points: List[str] = Field(
+        default_factory=list,
+        description="Key points where all models agree"
+    )
+
+    disagreement_points: List[str] = Field(
+        default_factory=list,
+        description="Points where models disagree"
+    )
+
+    confidence_range: Optional[str] = Field(
+        default=None,
+        description="Range of confidence levels across models",
+        examples=["medium to very_high"]
+    )
+
+    # Synthesized output
+    synthesized_answer: Optional[str] = Field(
+        default=None,
+        description="Combined/synthesized answer from all models"
+    )
+
+    # Metadata
+    timestamp: datetime = Field(
+        default_factory=datetime.now,
+        description="When this council research was conducted"
+    )
+
+    total_tokens: Optional[int] = Field(
+        default=None,
+        description="Total tokens used across all models"
+    )
+
+    total_cost: Optional[float] = Field(
+        default=None,
+        description="Estimated total cost in USD"
+    )
 
     class Config:
         json_schema_extra = {
             "example": {
                 "query": "Is it safe to invest in crypto now?",
-                "responses": [],  # Would contain multiple ResearchResponse objects
-                "consensus": "All models agree crypto is volatile",
-                "disagreements": ["GPT suggests waiting, Gemini says buy small amounts"],
-                "final_answer": "Crypto remains high-risk; only invest what you can afford to lose"
+                "domain": "finance",
+                "responses": {
+                    "gpt-4o": {},
+                    "gemini-2.5-flash": {}
+                },
+                "total_agents": 3,
+                "successful_agents": 2,
+                "failed_agents": ["deepseek-r1:14b"],
+                "consensus_points": [
+                    "Cryptocurrency is highly volatile",
+                    "Diversification is important"
+                ],
+                "disagreement_points": [
+                    "GPT suggests waiting, Gemini says buy small amounts"
+                ],
+                "confidence_range": "medium to high",
+                "synthesized_answer": "Crypto remains high-risk; only invest what you can afford to lose",
+                "total_tokens": 1234,
+                "total_cost": 0.0012
             }
         }
 
