@@ -21,12 +21,12 @@ dependencies = [
     "pydantic>=2.12.5",
 
     # Future Phase Dependencies (uncomment as needed)
+    # Frontend will be separate React app
     # "fastapi>=0.104.0",
     # "langchain>=0.3.0",
     # "langgraph>=0.2.0",
     # "tavily-python>=0.5.0",
     # "beautifulsoup4>=4.12.0",
-    # "pandas>=2.0.0",
 ]
 
 # Development Dependencies (testing, linting, formatting)
