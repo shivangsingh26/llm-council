@@ -16,6 +16,7 @@ Why use a base class?
 
 from abc import ABC, abstractmethod
 from typing import Optional
+import asyncio
 from src.models.schemas import ResearchResponse, ResearchDomain
 
 
@@ -52,14 +53,14 @@ class BaseResearchAgent(ABC):
         self.model_name = model_name
 
     @abstractmethod
-    def research(
+    async def research_async(
         self,
         query: str,
         domain: ResearchDomain,
         max_tokens: Optional[int] = 500
     ) -> ResearchResponse:
         """
-        Conduct research on a query and return structured results.
+        Conduct research asynchronously on a query and return structured results.
 
         This is an abstract method - each agent MUST implement it!
 
@@ -74,9 +75,33 @@ class BaseResearchAgent(ABC):
         Raises:
             Exception: If the API call fails
 
-        Learning: @abstractmethod decorator means subclasses MUST implement this!
+        Learning: async/await allows concurrent execution without blocking!
+        Using asyncio is the modern Python way for I/O-bound operations.
         """
         pass
+
+    def research(
+        self,
+        query: str,
+        domain: ResearchDomain,
+        max_tokens: Optional[int] = 500
+    ) -> ResearchResponse:
+        """
+        Synchronous wrapper around research_async for backwards compatibility.
+
+        Runs the async research method in an event loop.
+
+        Args:
+            query: The research question to answer
+            domain: Which domain (sports/finance/shopping/healthcare)
+            max_tokens: Maximum response length (controls cost and length)
+
+        Returns:
+            ResearchResponse: Structured research findings
+
+        Learning: This allows using agents in both sync and async contexts!
+        """
+        return asyncio.run(self.research_async(query, domain, max_tokens))
 
     def _build_system_prompt(self, domain: ResearchDomain) -> str:
         """

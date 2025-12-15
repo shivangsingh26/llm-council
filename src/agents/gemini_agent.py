@@ -14,6 +14,7 @@ Learning Points:
 from google import genai
 from typing import Optional
 from datetime import datetime
+import asyncio
 
 from src.agents.base_agent import BaseResearchAgent
 from src.models.schemas import ResearchResponse, ResearchDomain, ConfidenceLevel
@@ -62,6 +63,83 @@ class GeminiResearchAgent(BaseResearchAgent):
         self.client = genai.Client(api_key=api_key)
 
         print(f"✓ GeminiResearchAgent initialized with {model_name}")
+
+    async def research_async(
+        self,
+        query: str,
+        domain: ResearchDomain,
+        max_tokens: Optional[int] = 500
+    ) -> ResearchResponse:
+        """
+        Conduct research using Gemini asynchronously.
+
+        Since Google's genai SDK doesn't have native async support,
+        we use asyncio.to_thread() to run the sync API call without blocking.
+
+        Args:
+            query: Research question
+            domain: Research domain
+            max_tokens: Maximum response length
+
+        Returns:
+            ResearchResponse: Structured research findings
+
+        Learning: asyncio.to_thread() runs sync code in a thread pool!
+        This prevents blocking the event loop.
+        """
+
+        print(f"\n{'='*60}")
+        print(f"🔍 [Gemini] Researching: {query}")
+        print(f"📂 Domain: {domain.value}")
+        print(f"🤖 Model: {self.model_name}")
+        print(f"{'='*60}")
+
+        # Build the prompt
+        system_prompt = self._build_system_prompt(domain)
+        full_prompt = self._construct_research_prompt(query, system_prompt)
+
+        try:
+            # Run the sync API call in a thread pool to avoid blocking
+            # Learning: to_thread() is perfect for CPU-bound or sync I/O tasks!
+            response = await asyncio.to_thread(
+                self.client.models.generate_content,
+                model=self.model_name,
+                contents=full_prompt
+            )
+
+            # Extract the answer
+            answer = response.text
+
+            # Parse the response to extract structured data
+            parsed_data = self._parse_response(answer, query)
+
+            # Get token usage (if available)
+            tokens_used = None
+            if hasattr(response, 'usage_metadata') and hasattr(response.usage_metadata, 'total_token_count'):
+                tokens_used = response.usage_metadata.total_token_count
+
+            # Create structured response
+            research_response = ResearchResponse(
+                query=query,
+                answer=parsed_data['answer'],
+                domain=domain,
+                confidence=parsed_data['confidence'],
+                key_points=parsed_data['key_points'],
+                sources=parsed_data.get('sources'),
+                model_name=self.model_name,
+                timestamp=datetime.now(),
+                tokens_used=tokens_used
+            )
+
+            print(f"✅ [Gemini] Research completed")
+            print(f"📊 Tokens used: {tokens_used if tokens_used else 'N/A'}")
+            print(f"📈 Confidence: {research_response.confidence.value}")
+
+            return research_response
+
+        except Exception as e:
+            print(f"❌ [Gemini] Research failed: {e}")
+            raise
 
     def research(
         self,
