@@ -112,6 +112,18 @@ class ResearchResponse(BaseModel):
         description="Total tokens consumed by this request"
     )
 
+    # Tool augmentation (Phase 5)
+    tools_used: Optional[List[str]] = Field(
+        default=None,
+        description="List of tools used to enhance this response",
+        examples=[["finance_api", "web_search"]]
+    )
+
+    tool_results: Optional[Dict] = Field(
+        default=None,
+        description="Raw results from tool executions"
+    )
+
     class Config:
         """
         Pydantic configuration.

@@ -18,9 +18,12 @@ Use case: General research across all domains
 from openai import AsyncOpenAI
 from typing import Optional
 from datetime import datetime
+import re
 
 from src.agents.base_agent import BaseResearchAgent
 from src.models.schemas import ResearchResponse, ResearchDomain, ConfidenceLevel
+from src.prompts.prompt_selector import PromptSelector
+from src.tools.finance_api import FinanceAPI
 
 
 class OpenAIAgent(BaseResearchAgent):
@@ -45,7 +48,8 @@ class OpenAIAgent(BaseResearchAgent):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gpt-4o"
+        model_name: str = "gpt-4o",
+        use_tools: bool = True
     ):
         """
         Initialize OpenAI GPT-4o research agent.
@@ -53,6 +57,7 @@ class OpenAIAgent(BaseResearchAgent):
         Args:
             api_key: OpenAI API key
             model_name: Model to use (default: gpt-4o)
+            use_tools: Enable tool augmentation (default: True)
 
         Learning: AsyncOpenAI provides native async support!
         """
@@ -61,7 +66,14 @@ class OpenAIAgent(BaseResearchAgent):
         # Use async client for non-blocking API calls
         self.client = AsyncOpenAI(api_key=api_key)
 
+        # Initialize tools
+        self.use_tools = use_tools
+        self.prompt_selector = PromptSelector()
+        self.finance_api = FinanceAPI() if use_tools else None
+
         print(f"✓ OpenAIAgent initialized with {model_name}")
+        if use_tools:
+            print(f"  🔧 Tools enabled: Dynamic Prompts, Finance API")
 
     async def research_async(
         self,
@@ -70,7 +82,7 @@ class OpenAIAgent(BaseResearchAgent):
         max_tokens: Optional[int] = 500
     ) -> ResearchResponse:
         """
-        Conduct research using GPT-4o asynchronously.
+        Conduct research using GPT-4o asynchronously with tool augmentation.
 
         Args:
             query: Research question
@@ -78,7 +90,7 @@ class OpenAIAgent(BaseResearchAgent):
             max_tokens: Maximum response length
 
         Returns:
-            ResearchResponse: Structured research findings
+            ResearchResponse: Structured research findings with tool results
 
         Learning: async/await allows this to run concurrently with other agents!
         """
@@ -88,9 +100,33 @@ class OpenAIAgent(BaseResearchAgent):
         print(f"📂 Domain: {domain.value}")
         print(f"{'='*60}")
 
-        # Build the prompt
-        system_prompt = self._build_system_prompt(domain)
-        user_prompt = self._construct_research_prompt(query)
+        # Step 1: Check if we should use Finance API tool
+        tool_results = {}
+        tools_used = []
+
+        if self.use_tools and domain == ResearchDomain.FINANCE:
+            finance_data = await self._use_finance_tools(query)
+            if finance_data:
+                tool_results['finance'] = finance_data
+                tools_used.append('finance_api')
+                print(f"  🔧 Used Finance API: {list(finance_data.keys())}")
+
+        # Step 2: Build dynamic prompt with tool context
+        available_tools = ['finance_api'] if domain == ResearchDomain.FINANCE else []
+        prompts = self.prompt_selector.get_prompt(
+            query=query,
+            domain=domain,
+            available_tools=available_tools,
+            max_tokens=max_tokens
+        )
+
+        system_prompt = prompts['system']
+        user_prompt = prompts['user']
+
+        # Step 3: Add tool results to user prompt if available
+        if tool_results:
+            tool_context = self._format_tool_context(tool_results)
+            user_prompt = f"{user_prompt}\n\n{tool_context}"
 
         try:
             # Call OpenAI API asynchronously
@@ -113,7 +149,7 @@ class OpenAIAgent(BaseResearchAgent):
             # Get token usage
             tokens_used = response.usage.total_tokens
 
-            # Create structured response
+            # Create structured response with tool information
             research_response = ResearchResponse(
                 query=query,
                 answer=parsed_data['answer'],
@@ -123,7 +159,9 @@ class OpenAIAgent(BaseResearchAgent):
                 sources=parsed_data.get('sources'),
                 model_name=self.model_name,
                 timestamp=datetime.now(),
-                tokens_used=tokens_used
+                tokens_used=tokens_used,
+                tools_used=tools_used if tools_used else None,
+                tool_results=tool_results if tool_results else None
             )
 
             print(f"✅ [GPT-4o] Research completed")
@@ -135,6 +173,74 @@ class OpenAIAgent(BaseResearchAgent):
         except Exception as e:
             print(f"❌ [GPT-4o] Research failed: {e}")
             raise
+
+    async def _use_finance_tools(self, query: str) -> dict:
+        """
+        Use Finance API tools when query is about stocks/markets.
+
+        Args:
+            query: Research query
+
+        Returns:
+            Dict with finance data if relevant, empty dict otherwise
+        """
+        if not self.finance_api:
+            return {}
+
+        results = {}
+        query_lower = query.lower()
+
+        # Detect stock symbols (e.g., AAPL, TSLA, MSFT)
+        stock_pattern = r'\b([A-Z]{1,5})\b'
+        potential_symbols = re.findall(stock_pattern, query)
+
+        # Common stock keywords
+        if any(word in query_lower for word in ['stock', 'share', 'ticker']):
+            for symbol in potential_symbols[:3]:  # Limit to 3 stocks
+                try:
+                    data = await self.finance_api.get_stock_price(symbol)
+                    if data.get('success'):
+                        results[f'stock_{symbol}'] = data
+                except:
+                    pass
+
+        # Market summary keywords
+        if any(word in query_lower for word in ['market', 's&p', 'dow', 'nasdaq', 'indices']):
+            try:
+                market_data = await self.finance_api.get_market_summary()
+                if market_data.get('success'):
+                    results['market_summary'] = market_data
+            except:
+                pass
+
+        return results
+
+    def _format_tool_context(self, tool_results: dict) -> str:
+        """
+        Format tool results for inclusion in LLM prompt.
+
+        Args:
+            tool_results: Dict of tool_name -> result_data
+
+        Returns:
+            Formatted string for prompt context
+        """
+        context_parts = ["\n## 📊 Real-Time Data (from tools):"]
+
+        if 'finance' in tool_results:
+            finance_data = tool_results['finance']
+
+            for key, data in finance_data.items():
+                if key.startswith('stock_'):
+                    formatted = self.finance_api.format_for_prompt(data)
+                    context_parts.append(f"\n{formatted}")
+                elif key == 'market_summary':
+                    formatted = self.finance_api.format_for_prompt(data)
+                    context_parts.append(f"\n{formatted}")
+
+        context_parts.append("\nUse this real-time data in your answer. Cite specific numbers and sources.")
+
+        return "\n".join(context_parts)
 
     def _construct_research_prompt(self, query: str) -> str:
         """
