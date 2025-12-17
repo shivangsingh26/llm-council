@@ -26,10 +26,12 @@ class SDKClient {
     })
 
     if (!response.ok) {
-      throw new Error(`Research failed: ${response.statusText}`)
+      const error = await response.json().catch(() => ({ detail: response.statusText }))
+      throw new Error(error.detail || `Research failed: ${response.statusText}`)
     }
 
-    return response.json()
+    const result = await response.json()
+    return result.data // Backend returns {success: true, data: ComparisonResult}
   }
 
   /**
@@ -44,7 +46,8 @@ class SDKClient {
       throw new Error(`Failed to fetch history: ${response.statusText}`)
     }
 
-    return response.json()
+    const result = await response.json()
+    return result.data // Backend returns {success: true, data: [...]}
   }
 
   /**
@@ -57,7 +60,8 @@ class SDKClient {
       throw new Error(`Failed to fetch research: ${response.statusText}`)
     }
 
-    return response.json()
+    const result = await response.json()
+    return result.data // Backend returns {success: true, data: ComparisonResult}
   }
 
   /**

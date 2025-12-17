@@ -3,19 +3,37 @@ import { Button } from '@/components/ui/button'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { Plus } from 'lucide-react'
+import { sdkClient } from '@/lib/sdk-client'
 
-// Mock data - will be replaced with API calls in Phase 4
-const mockStats = {
-  total_research: 0,
-  total_queries: 0,
-  total_tokens: 0,
-  total_cost: 0,
-  active_agents: 3,
+// Fetch real data from backend API
+async function getStats() {
+  try {
+    return await sdkClient.getStats()
+  } catch (error) {
+    console.error('Failed to fetch stats:', error)
+    return {
+      total_research: 0,
+      total_queries: 0,
+      total_tokens: 0,
+      total_cost: 0,
+      active_agents: 3,
+    }
+  }
 }
 
-const mockRecentResearch = []
+async function getRecentResearch() {
+  try {
+    return await sdkClient.getHistory(5)
+  } catch (error) {
+    console.error('Failed to fetch recent research:', error)
+    return []
+  }
+}
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const stats = await getStats()
+  const recentResearch = await getRecentResearch()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -33,10 +51,10 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <StatsCards stats={mockStats} />
+      <StatsCards stats={stats} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <RecentActivity recentResearch={mockRecentResearch} />
+        <RecentActivity recentResearch={recentResearch} />
 
         <div className="space-y-4">
           <div className="rounded-lg border bg-card p-6">

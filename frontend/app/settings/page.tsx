@@ -1,3 +1,7 @@
+import { APIKeys } from '@/components/settings/api-keys'
+import { Preferences } from '@/components/settings/preferences'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
@@ -8,11 +12,20 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="rounded-lg border bg-card p-6">
-        <p className="text-muted-foreground">
-          Settings page coming soon...
-        </p>
-      </div>
+      <Tabs defaultValue="api-keys" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="api-keys" className="space-y-6">
+          <APIKeys />
+        </TabsContent>
+
+        <TabsContent value="preferences" className="space-y-6">
+          <Preferences />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

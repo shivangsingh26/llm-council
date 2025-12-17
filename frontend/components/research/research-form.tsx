@@ -30,13 +30,10 @@ const formSchema = z.object({
     message: 'Query must be at least 10 characters.',
   }),
   domain: z.enum([
-    'general',
-    'technology',
-    'science',
-    'business',
-    'health',
     'sports',
-    'entertainment',
+    'finance',
+    'shopping',
+    'healthcare',
   ]),
   max_tokens: z.number().optional(),
 })
@@ -51,7 +48,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       query: '',
-      domain: 'general',
+      domain: 'healthcare',
       max_tokens: 500,
     },
   })
@@ -80,15 +77,10 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="science">Science</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                      <SelectItem value="health">Health</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
                       <SelectItem value="sports">Sports</SelectItem>
-                      <SelectItem value="entertainment">
-                        Entertainment
-                      </SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="shopping">Shopping</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
