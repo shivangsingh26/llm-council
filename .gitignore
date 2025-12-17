@@ -13,6 +13,12 @@ docs/
 # Research outputs (local data)
 outputs/
 
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # Python cache
 __pycache__/
 *.pyc
