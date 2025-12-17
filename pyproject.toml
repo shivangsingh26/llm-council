@@ -20,9 +20,14 @@ dependencies = [
     # Data Validation & Schemas
     "pydantic>=2.12.5",
 
+    # Backend API (Phase 4)
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+    "sse-starlette>=1.8.0",
+    "sqlalchemy>=2.0.0",
+
     # Future Phase Dependencies (uncomment as needed)
-    # Frontend will be separate React app
-    # "fastapi>=0.104.0",
     # "langchain>=0.3.0",
     # "langgraph>=0.2.0",
     # "tavily-python>=0.5.0",
