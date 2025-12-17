@@ -203,6 +203,27 @@ class ComparisonResult(BaseModel):
         description="Combined/synthesized answer from all models"
     )
 
+    # Advanced reasoning fields (Phase A: Master Synthesizer)
+    reasoning_trace: Optional[str] = Field(
+        default=None,
+        description="Chain-of-thought reasoning from master synthesizer (o1/o3)"
+    )
+
+    knowledge_gaps: List[str] = Field(
+        default_factory=list,
+        description="Areas where agents lack complete information"
+    )
+
+    verification_needed: List[str] = Field(
+        default_factory=list,
+        description="Claims that need fact-checking or verification"
+    )
+
+    confidence_reasoning: Optional[str] = Field(
+        default=None,
+        description="Detailed explanation for confidence assessment"
+    )
+
     # Metadata
     timestamp: datetime = Field(
         default_factory=datetime.now,

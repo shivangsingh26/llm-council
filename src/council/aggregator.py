@@ -12,6 +12,7 @@ Learning Points:
 
 from typing import Dict, List, Optional, Set
 from collections import Counter
+import os
 
 from src.models.schemas import (
     ResearchResponse,
@@ -20,10 +21,22 @@ from src.models.schemas import (
     ConfidenceLevel
 )
 
+# Import master synthesizer (Phase A)
+try:
+    from src.council.master_synthesizer import MasterSynthesizer
+    MASTER_SYNTHESIZER_AVAILABLE = True
+except ImportError:
+    MASTER_SYNTHESIZER_AVAILABLE = False
+    print("⚠️  MasterSynthesizer not available - using rule-based aggregation")
+
 
 class ResponseAggregator:
     """
     Aggregates and compares responses from multiple AI agents.
+
+    The aggregator supports two modes:
+    1. **Rule-Based (Legacy)**: Simple consensus/disagreement detection
+    2. **Master Synthesizer (New)**: LLM-based deep reasoning with o1/o3
 
     The aggregator:
     1. Takes responses from all agents
@@ -38,8 +51,9 @@ class ResponseAggregator:
             "gemini-2.5-flash": ResearchResponse(...)
         }
 
-        aggregator = ResponseAggregator()
-        result = aggregator.aggregate(
+        # Use master synthesizer (recommended)
+        aggregator = ResponseAggregator(use_master_synthesizer=True)
+        result = await aggregator.aggregate(
             responses=responses,
             query="What are the benefits of exercise?",
             domain=ResearchDomain.HEALTHCARE
@@ -47,6 +61,7 @@ class ResponseAggregator:
 
         print(result.consensus_points)  # Points all models agree on
         print(result.synthesized_answer)  # Combined answer
+        print(result.reasoning_trace)  # NEW: Reasoning from o1/o3
     """
 
     # Token pricing (per 1M tokens) for cost estimation
@@ -56,7 +71,34 @@ class ResponseAggregator:
         "deepseek-r1:14b": 0.0,  # Local
     }
 
-    def aggregate(
+    def __init__(self, use_master_synthesizer: bool = True):
+        """
+        Initialize response aggregator.
+
+        Args:
+            use_master_synthesizer: If True, use o1/o3 for synthesis (default: True)
+                                   If False, use rule-based aggregation (legacy)
+
+        Note: Master synthesizer requires OPENAI_API_KEY with o1 access
+        """
+        self.use_master = use_master_synthesizer and MASTER_SYNTHESIZER_AVAILABLE
+        self.master_synthesizer = None
+
+        if self.use_master:
+            try:
+                self.master_synthesizer = MasterSynthesizer(
+                    api_key=os.getenv("OPENAI_API_KEY"),
+                    model="gpt-4o"  # Excellent reasoning, widely available
+                )
+                print("✓ ResponseAggregator using Master Synthesizer (gpt-4o)")
+            except Exception as e:
+                print(f"⚠️  Master Synthesizer initialization failed: {e}")
+                print("   Falling back to rule-based aggregation")
+                self.use_master = False
+        else:
+            print("✓ ResponseAggregator using rule-based aggregation (legacy)")
+
+    async def aggregate(
         self,
         responses: Dict[str, Optional[ResearchResponse]],
         query: str,
@@ -65,6 +107,10 @@ class ResponseAggregator:
         """
         Aggregate responses from multiple agents into a comparison result.
 
+        This method supports two modes:
+        1. Master Synthesizer (async): Uses o1-mini for deep reasoning
+        2. Rule-Based (sync): Uses simple heuristics
+
         Args:
             responses: Dict mapping model name to response (or None if failed)
             query: The original research question
@@ -72,6 +118,82 @@ class ResponseAggregator:
 
         Returns:
             ComparisonResult with aggregated analysis
+
+        Note: This method is now async to support master synthesizer
+        """
+
+        # If master synthesizer is available, use it
+        if self.use_master and self.master_synthesizer:
+            return await self._aggregate_with_master(responses, query, domain)
+
+        # Otherwise, use legacy rule-based aggregation
+        return self._aggregate_rule_based(responses, query, domain)
+
+    async def _aggregate_with_master(
+        self,
+        responses: Dict[str, Optional[ResearchResponse]],
+        query: str,
+        domain: ResearchDomain
+    ) -> ComparisonResult:
+        """
+        Aggregate using master synthesizer (o1-mini).
+
+        Args:
+            responses: Agent responses
+            query: Research question
+            domain: Research domain
+
+        Returns:
+            ComparisonResult with deep reasoning
+        """
+
+        # Filter successful responses
+        successful_responses = {
+            model: resp for model, resp in responses.items()
+            if resp is not None
+        }
+
+        if not successful_responses:
+            # All failed - return empty result
+            failed_models = list(responses.keys())
+            return ComparisonResult(
+                query=query,
+                domain=domain,
+                responses={},
+                total_agents=len(responses),
+                successful_agents=0,
+                failed_agents=failed_models,
+                consensus_points=[],
+                disagreement_points=[],
+                confidence_range="low",
+                synthesized_answer="All agents failed to respond.",
+                total_tokens=0,
+                total_cost=0.0
+            )
+
+        # Use master synthesizer
+        return await self.master_synthesizer.synthesize(
+            query=query,
+            responses=successful_responses,
+            domain=domain
+        )
+
+    def _aggregate_rule_based(
+        self,
+        responses: Dict[str, Optional[ResearchResponse]],
+        query: str,
+        domain: ResearchDomain
+    ) -> ComparisonResult:
+        """
+        Legacy rule-based aggregation.
+
+        Args:
+            responses: Agent responses
+            query: Research question
+            domain: Research domain
+
+        Returns:
+            ComparisonResult using simple heuristics
         """
 
         # Filter out failed responses

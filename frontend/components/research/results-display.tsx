@@ -74,6 +74,42 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
             </>
           )}
 
+          {result.knowledge_gaps && result.knowledge_gaps.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-semibold mb-2 text-blue-500">
+                  Knowledge Gaps
+                </h4>
+                <ul className="space-y-2">
+                  {result.knowledge_gaps.map((gap, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground pl-4 border-l-2 border-blue-500">
+                      {gap}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+
+          {result.verification_needed && result.verification_needed.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-semibold mb-2 text-purple-500">
+                  Verification Needed
+                </h4>
+                <ul className="space-y-2">
+                  {result.verification_needed.map((claim, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground pl-4 border-l-2 border-purple-500">
+                      {claim}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+
           {result.failed_agents.length > 0 && (
             <>
               <Separator />
@@ -93,6 +129,33 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Reasoning Trace (Phase A: Master Synthesizer) */}
+      {result.reasoning_trace && (
+        <Card>
+          <CardHeader>
+            <CardTitle>🧠 Reasoning Trace (Master Synthesizer)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border bg-card/50 p-4">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                {result.reasoning_trace}
+              </p>
+            </div>
+            {result.confidence_reasoning && (
+              <>
+                <Separator className="my-4" />
+                <div>
+                  <h4 className="font-semibold mb-2">Confidence Reasoning</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {result.confidence_reasoning}
+                  </p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Individual Agent Responses */}
       <Card>
@@ -114,10 +177,10 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
                   <p className="text-sm leading-relaxed">{response.answer}</p>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>Confidence: {(response.confidence * 100).toFixed(0)}%</span>
+                  <span>Confidence: {response.confidence}</span>
                   <Separator orientation="vertical" className="h-4" />
                   <span>Tokens: {response.tokens_used}</span>
-                  {response.sources.length > 0 && (
+                  {response.sources && response.sources.length > 0 && (
                     <>
                       <Separator orientation="vertical" className="h-4" />
                       <span>Sources: {response.sources.length}</span>

@@ -34,6 +34,12 @@ export interface ComparisonResult {
   timestamp: string
   total_tokens: number | null
   total_cost: number | null
+
+  // Phase A: Master Synthesizer fields
+  reasoning_trace?: string | null
+  knowledge_gaps?: string[]
+  verification_needed?: string[]
+  confidence_reasoning?: string | null
 }
 
 export interface ResearchRequest {
