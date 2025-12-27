@@ -11,6 +11,27 @@ interface ResultsDisplayProps {
 }
 
 export function ResultsDisplay({ result }: ResultsDisplayProps) {
+  // Helper to get routing badge variant
+  const getRoutingBadgeVariant = (routing: string) => {
+    switch (routing) {
+      case 'fast':
+        return 'default' // green-ish
+      case 'medium':
+        return 'secondary' // yellow-ish
+      case 'deep':
+        return 'destructive' // red-ish
+      default:
+        return 'outline'
+    }
+  }
+
+  // Helper to get disagreement color
+  const getDisagreementColor = (score: number) => {
+    if (score < 0.3) return 'text-green-500'
+    if (score < 0.7) return 'text-yellow-500'
+    return 'text-red-500'
+  }
+
   return (
     <div className="space-y-6">
       {/* Synthesized Answer */}
@@ -31,6 +52,115 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
                 <Badge variant="outline">{result.confidence_range}</Badge>
               )}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Phase 1: Adaptive Routing Metrics */}
+      {(result.disagreement_score !== undefined || result.routing_decision || result.latency_breakdown) && (
+        <Card className="border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              🎯 Adaptive Routing Metrics
+              <Badge variant="outline" className="ml-auto">Phase 1</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Disagreement Score */}
+            {result.disagreement_score !== undefined && (
+              <div>
+                <h4 className="font-semibold mb-2 text-sm">Disagreement Score</h4>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${
+                          result.disagreement_score < 0.3
+                            ? 'bg-green-500'
+                            : result.disagreement_score < 0.7
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                        }`}
+                        style={{ width: `${result.disagreement_score * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className={`font-mono font-bold ${getDisagreementColor(result.disagreement_score)}`}>
+                    {result.disagreement_score.toFixed(3)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {result.disagreement_score < 0.3
+                    ? 'High agreement - models are aligned'
+                    : result.disagreement_score < 0.7
+                    ? 'Moderate disagreement - some differences'
+                    : 'High disagreement - significant differences'}
+                </p>
+              </div>
+            )}
+
+            {/* Routing Decision */}
+            {result.routing_decision && (
+              <div>
+                <h4 className="font-semibold mb-2 text-sm">Routing Path</h4>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={getRoutingBadgeVariant(result.routing_decision)}
+                    className="text-lg py-1 px-4"
+                  >
+                    {result.routing_decision.toUpperCase()}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {result.routing_decision === 'fast'
+                      ? '⚡ Lightweight processing'
+                      : result.routing_decision === 'medium'
+                      ? '⚙️ Standard processing'
+                      : '🔍 Deep processing'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Latency Breakdown */}
+            {result.latency_breakdown && (
+              <div>
+                <h4 className="font-semibold mb-2 text-sm">Latency Breakdown</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {result.latency_breakdown.council_phase_ms !== undefined && (
+                    <div className="rounded-lg border bg-card/50 p-3">
+                      <div className="text-xs text-muted-foreground mb-1">Council</div>
+                      <div className="font-mono font-bold">
+                        {result.latency_breakdown.council_phase_ms}ms
+                      </div>
+                    </div>
+                  )}
+                  {result.latency_breakdown.disagreement_analysis_ms !== undefined && (
+                    <div className="rounded-lg border bg-card/50 p-3">
+                      <div className="text-xs text-muted-foreground mb-1">Analysis</div>
+                      <div className="font-mono font-bold">
+                        {result.latency_breakdown.disagreement_analysis_ms}ms
+                      </div>
+                    </div>
+                  )}
+                  {result.latency_breakdown.judge_phase_ms !== undefined && (
+                    <div className="rounded-lg border bg-card/50 p-3">
+                      <div className="text-xs text-muted-foreground mb-1">Judge</div>
+                      <div className="font-mono font-bold">
+                        {result.latency_breakdown.judge_phase_ms}ms
+                      </div>
+                    </div>
+                  )}
+                  {result.latency_breakdown.total_ms !== undefined && (
+                    <div className="rounded-lg border bg-primary/10 p-3">
+                      <div className="text-xs text-muted-foreground mb-1">Total</div>
+                      <div className="font-mono font-bold text-primary">
+                        {result.latency_breakdown.total_ms}ms
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

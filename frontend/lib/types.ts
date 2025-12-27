@@ -40,12 +40,23 @@ export interface ComparisonResult {
   knowledge_gaps?: string[]
   verification_needed?: string[]
   confidence_reasoning?: string | null
+
+  // Phase 1: Adaptive Routing fields
+  disagreement_score?: number | null
+  routing_decision?: string | null
+  latency_breakdown?: {
+    council_phase_ms?: number
+    disagreement_analysis_ms?: number
+    judge_phase_ms?: number
+    total_ms?: number
+  } | null
 }
 
 export interface ResearchRequest {
   query: string
   domain: ResearchDomain
   max_tokens?: number
+  depth_mode?: 'auto' | 'fast' | 'medium' | 'deep'
 }
 
 export interface AgentStatus {
