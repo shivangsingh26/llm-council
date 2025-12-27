@@ -3,6 +3,14 @@
 echo "🚀 Starting LLM Council..."
 echo ""
 
+# Activate virtual environment
+if [ -d ".venv" ]; then
+    echo "📦 Activating virtual environment..."
+    source .venv/bin/activate
+else
+    echo "⚠️  No .venv found. Make sure you've run: python -m venv .venv"
+fi
+
 # Load environment variables
 export $(grep -v '^#' .env | xargs)
 

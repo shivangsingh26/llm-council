@@ -15,9 +15,12 @@ from google import genai
 from typing import Optional
 from datetime import datetime
 import asyncio
+import re
 
 from src.agents.base_agent import BaseResearchAgent
 from src.models.schemas import ResearchResponse, ResearchDomain, ConfidenceLevel
+from src.prompts.prompt_selector import PromptSelector
+from src.tools.finance_api import FinanceAPI
 
 
 class GeminiResearchAgent(BaseResearchAgent):
@@ -47,7 +50,8 @@ class GeminiResearchAgent(BaseResearchAgent):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gemini-2.5-flash"
+        model_name: str = "gemini-2.5-flash",
+        use_tools: bool = True
     ):
         """
         Initialize Gemini research agent.
@@ -55,6 +59,7 @@ class GeminiResearchAgent(BaseResearchAgent):
         Args:
             api_key: Google AI API key
             model_name: Gemini model to use (default: gemini-2.5-flash)
+            use_tools: Enable tool augmentation (default: True)
         """
         # Call parent class constructor
         super().__init__(api_key, model_name)
@@ -62,7 +67,14 @@ class GeminiResearchAgent(BaseResearchAgent):
         # Initialize Gemini client
         self.client = genai.Client(api_key=api_key)
 
+        # Initialize tools
+        self.use_tools = use_tools
+        self.prompt_selector = PromptSelector()
+        self.finance_api = FinanceAPI() if use_tools else None
+
         print(f"✓ GeminiResearchAgent initialized with {model_name}")
+        if use_tools:
+            print(f"  🔧 Tools enabled: Dynamic Prompts, Finance API")
 
     async def research_async(
         self,

@@ -236,6 +236,30 @@ class ComparisonResult(BaseModel):
         description="Detailed explanation for confidence assessment"
     )
 
+    # Phase 1: Adaptive Routing Fields
+    disagreement_score: Optional[float] = Field(
+        default=None,
+        description="Quantified disagreement score (0.0-1.0). 0.0 = full agreement, 1.0 = complete disagreement",
+        ge=0.0,
+        le=1.0
+    )
+
+    disagreement_details: Optional[Dict] = Field(
+        default=None,
+        description="Detailed breakdown of disagreement analysis including pairwise similarities"
+    )
+
+    routing_decision: Optional[str] = Field(
+        default=None,
+        description="Routing path taken: 'fast', 'medium', or 'deep'",
+        examples=["fast", "medium", "deep"]
+    )
+
+    latency_breakdown: Optional[Dict] = Field(
+        default=None,
+        description="Breakdown of latency by phase (council_phase_ms, judge_phase_ms, total_ms)"
+    )
+
     # Metadata
     timestamp: datetime = Field(
         default_factory=datetime.now,
