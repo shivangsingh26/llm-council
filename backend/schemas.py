@@ -26,12 +26,14 @@ class ResearchRequest(BaseModel):
     {
         "query": "What are the benefits of exercise?",
         "domain": "health",
-        "max_tokens": 500
+        "max_tokens": 500,
+        "depth_mode": "auto"
     }
     """
     query: str = Field(..., min_length=10, description="Research question (min 10 chars)")
     domain: ResearchDomain = Field(..., description="Research domain")
     max_tokens: Optional[int] = Field(500, ge=100, le=2000, description="Max tokens per agent")
+    depth_mode: Optional[str] = Field("auto", description="Routing mode: auto, fast, medium, or deep")
 
 
 # ============================================================================

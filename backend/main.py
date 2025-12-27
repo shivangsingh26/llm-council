@@ -21,6 +21,10 @@ from backend.routes import research, history, stats
 from backend.database.connection import init_db
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ============================================================================
 # LIFESPAN EVENT HANDLER
@@ -169,3 +173,21 @@ async def health_check():
         "database": db_status,
         "api_keys": api_keys
     }
+
+
+# ============================================================================
+# MAIN ENTRY POINT (for direct execution)
+# ============================================================================
+
+if __name__ == "__main__":
+    import uvicorn
+
+    print("\n🚀 Starting LLM Council Backend...\n")
+
+    uvicorn.run(
+        "backend.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    )

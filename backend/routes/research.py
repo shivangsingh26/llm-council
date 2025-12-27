@@ -60,12 +60,13 @@ async def execute_research(
         print(f"📝 New research request received")
         print(f"{'='*60}")
 
-        # Execute research using the service
+        # Execute research using the service with adaptive routing
         # This also saves the file via OutputManager
         comparison = await research_service.execute_research(
             query=request.query,
             domain=request.domain,
-            max_tokens=request.max_tokens or 500
+            max_tokens=request.max_tokens or 500,
+            depth_mode=request.depth_mode or "auto"
         )
 
         # Generate session ID

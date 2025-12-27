@@ -84,25 +84,28 @@ class ResearchService:
         self,
         query: str,
         domain: ResearchDomain,
-        max_tokens: int = 500
+        max_tokens: int = 500,
+        depth_mode: str = "auto"
     ) -> ComparisonResult:
         """
-        Execute research with all available agents
+        Execute research with all available agents using adaptive routing
 
         This is the main method called by the API endpoint.
         It orchestrates the entire research flow:
         1. Create agents
-        2. Run research in parallel via CouncilOrchestrator
-        3. Aggregate responses
-        4. Save results to file
+        2. Run research with adaptive routing (council + disagreement analysis)
+        3. Route to Fast/Medium/Deep path based on disagreement
+        4. Synthesize final answer
+        5. Save results to file
 
         Args:
             query: Research question
             domain: Research domain (health, finance, etc.)
             max_tokens: Maximum tokens per agent response
+            depth_mode: Routing mode ("auto", "fast", "medium", "deep")
 
         Returns:
-            ComparisonResult with all agent responses and analysis
+            ComparisonResult with all agent responses, routing info, and analysis
 
         Raises:
             ValueError: If no agents are available
@@ -122,26 +125,80 @@ class ResearchService:
         print(f"\n🔬 Starting research with {len(agents)} agent(s)")
         print(f"   Query: {query}")
         print(f"   Domain: {domain}")
+        print(f"   Depth Mode: {depth_mode}")
 
-        # Create council orchestrator and run research in parallel
-        council = CouncilOrchestrator(agents)
-        responses = await council.research_all(
+        # Create aggregator and council with adaptive routing
+        aggregator = ResponseAggregator()
+        council = CouncilOrchestrator(agents, aggregator=aggregator)
+
+        # Execute research with adaptive routing
+        result = await council.research_with_routing(
             query=query,
             domain=domain,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            depth_mode=depth_mode
         )
 
-        print(f"✅ Received {len(responses)} responses")
+        print(f"✅ Research complete")
+        print(f"   Routing: {result['routing_decision'].upper()}")
+        print(f"   Disagreement: {result.get('disagreement_score', 'N/A')}")
 
-        # Aggregate responses (now async for Master Synthesizer support)
-        aggregator = ResponseAggregator()
-        comparison = await aggregator.aggregate(
-            responses=responses,
+        # Build ComparisonResult from routing result
+        # Extract valid responses (filter out None)
+        valid_responses = {
+            model: response
+            for model, response in result['responses'].items()
+            if response is not None
+        }
+
+        # Calculate agent counts
+        total_agents = len(result['responses'])
+        successful_agents = len(valid_responses)
+        failed_agents = [
+            model for model, response in result['responses'].items()
+            if response is None
+        ]
+
+        # Calculate totals
+        total_tokens = sum(r.tokens_used or 0 for r in valid_responses.values())
+
+        # Calculate cost based on model pricing
+        total_cost = 0.0
+        PRICING = {
+            "gpt-4o": 2.50,  # $2.50 per 1M tokens (combined input+output average)
+            "gemini-2.5-flash": 0.075,  # $0.075 per 1M tokens
+            "deepseek-r1:14b": 0.0,  # Local model (free)
+        }
+
+        for model_name, response in valid_responses.items():
+            if response.tokens_used:
+                price_per_1m = PRICING.get(model_name, 0.0)
+                cost = (response.tokens_used / 1_000_000) * price_per_1m
+                total_cost += cost
+
+        # Create ComparisonResult
+        comparison = ComparisonResult(
             query=query,
-            domain=domain
+            domain=domain,
+            responses=valid_responses,
+            total_agents=total_agents,
+            successful_agents=successful_agents,
+            failed_agents=failed_agents,
+            synthesized_answer=result.get('synthesized_answer', ''),
+            consensus_points=result.get('consensus_points', []),
+            disagreement_points=result.get('disagreement_points', []),
+            reasoning_trace=result.get('reasoning_trace'),
+            knowledge_gaps=result.get('knowledge_gaps', []),
+            verification_needed=result.get('verification_needed', []),
+            confidence_reasoning=result.get('confidence_reasoning'),
+            total_tokens=total_tokens,
+            total_cost=total_cost,
+            # Phase 1 fields
+            disagreement_score=result.get('disagreement_score'),
+            routing_decision=result.get('routing_decision'),
+            latency_breakdown=result.get('latency_breakdown')
         )
 
-        print(f"✅ Aggregation complete")
         print(f"   Total tokens: {comparison.total_tokens}")
         print(f"   Total cost: ${comparison.total_cost:.6f}")
 
