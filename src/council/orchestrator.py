@@ -13,9 +13,12 @@ Learning Points:
 import asyncio
 from typing import List, Dict, Optional
 from datetime import datetime
+import time
 
 from src.agents.base_agent import BaseResearchAgent
 from src.models.schemas import ResearchResponse, ResearchDomain
+from src.council.disagreement_analyzer import DisagreementAnalyzer
+from src.council.adaptive_router import AdaptiveRouter
 
 
 class CouncilOrchestrator:
@@ -47,12 +50,13 @@ class CouncilOrchestrator:
         # results is a dict: {"gemini-2.5-flash": ResearchResponse, "gpt-4o": ResearchResponse}
     """
 
-    def __init__(self, agents: List[BaseResearchAgent]):
+    def __init__(self, agents: List[BaseResearchAgent], aggregator=None):
         """
         Initialize the council with a list of agents.
 
         Args:
             agents: List of research agents (must inherit from BaseResearchAgent)
+            aggregator: Optional ResponseAggregator for synthesis
 
         Raises:
             ValueError: If no agents provided or agents list is empty
@@ -62,10 +66,18 @@ class CouncilOrchestrator:
 
         self.agents = agents
         self.agent_count = len(agents)
+        self.aggregator = aggregator
+
+        # Initialize disagreement analyzer for Phase 1
+        self.disagreement_analyzer = DisagreementAnalyzer()
+
+        # Initialize adaptive router for Phase 1
+        self.router = AdaptiveRouter(aggregator=aggregator)
 
         print(f"✓ CouncilOrchestrator initialized with {self.agent_count} agents:")
         for agent in agents:
             print(f"   • {agent.model_name}")
+        print(f"✓ Adaptive router enabled (Fast/Medium/Deep paths)")
 
     async def research_all(
         self,
@@ -143,6 +155,136 @@ class CouncilOrchestrator:
         print(f"{'='*70}\n")
 
         return responses
+
+    async def research_with_routing(
+        self,
+        query: str,
+        domain: ResearchDomain,
+        max_tokens: Optional[int] = 500,
+        depth_mode: str = "auto"
+    ) -> Dict:
+        """
+        Run research with disagreement analysis and adaptive routing (Phase 1).
+
+        This method:
+        1. Runs council in parallel
+        2. Analyzes disagreement between responses
+        3. Routes to appropriate processing path (FAST/MEDIUM/DEEP)
+        4. Executes path-specific synthesis
+
+        Args:
+            query: Research question
+            domain: Research domain
+            max_tokens: Maximum tokens per response
+            depth_mode: "auto" (use disagreement score) or "fast"/"medium"/"deep" (override)
+
+        Returns:
+            Dict with:
+                - responses: Dict[str, ResearchResponse]
+                - disagreement_score: float (0.0-1.0)
+                - disagreement_details: Dict with analysis breakdown
+                - routing_decision: str ("fast", "medium", or "deep")
+                - latency_breakdown: Dict with timing information
+                - synthesized_answer: str (from router execution)
+                - consensus_points: List[str]
+                - disagreement_points: List[str]
+        """
+        print(f"\n{'='*70}")
+        print(f"🏛️  COUNCIL RESEARCH WITH ADAPTIVE ROUTING")
+        print(f"{'='*70}\n")
+
+        overall_start = time.time()
+
+        # Step 1: Execute council (parallel)
+        council_start = time.time()
+        responses = await self.research_all(query, domain, max_tokens)
+        council_duration = (time.time() - council_start) * 1000
+
+        # Filter out None responses (failed agents)
+        valid_responses = {
+            model: response
+            for model, response in responses.items()
+            if response is not None
+        }
+
+        if len(valid_responses) < 2:
+            print("⚠️  Warning: Fewer than 2 valid responses, skipping routing")
+            return {
+                "responses": responses,
+                "disagreement_score": None,
+                "disagreement_details": None,
+                "routing_decision": "unknown",
+                "latency_breakdown": {
+                    "council_phase_ms": int(council_duration),
+                    "disagreement_analysis_ms": 0,
+                    "judge_phase_ms": 0,
+                    "total_ms": int((time.time() - overall_start) * 1000)
+                },
+                "synthesized_answer": "Insufficient valid responses",
+                "consensus_points": [],
+                "disagreement_points": []
+            }
+
+        # Step 2: Analyze disagreement
+        analysis_start = time.time()
+        disagreement_result = await self.disagreement_analyzer.calculate_disagreement(
+            valid_responses
+        )
+        analysis_duration = (time.time() - analysis_start) * 1000
+        score = disagreement_result["score"]
+
+        # Step 3: Determine routing path
+        path = self.router.determine_path(score, user_preference=depth_mode)
+
+        # Step 4: Execute appropriate path
+        router_result = await self.router.execute_path(
+            path=path,
+            council_responses=valid_responses,
+            disagreement_score=score,
+            disagreement_details=disagreement_result["details"],
+            query=query,
+            domain=domain.value if hasattr(domain, 'value') else domain
+        )
+        judge_duration = router_result.get("judge_phase_ms", 0)
+
+        # Step 5: Calculate total time
+        total_duration = (time.time() - overall_start) * 1000
+
+        # Step 6: Display routing information
+        print(f"\n{'='*70}")
+        print(f"📊 ADAPTIVE ROUTING RESULTS")
+        print(f"{'='*70}")
+        print(f"Disagreement Score: {score:.3f}")
+        print(f"Routing Decision: {path.value.upper()}")
+        print(f"Explanation: {disagreement_result['explanation']}")
+        print(f"\nLatency Breakdown:")
+        print(f"  • Council phase: {council_duration:.0f}ms")
+        print(f"  • Disagreement analysis: {analysis_duration:.0f}ms")
+        print(f"  • Judge phase ({path.value}): {judge_duration:.0f}ms")
+        print(f"  • Total: {total_duration:.0f}ms")
+        print(f"{'='*70}\n")
+
+        return {
+            "responses": responses,
+            "disagreement_score": score,
+            "disagreement_details": disagreement_result["details"],
+            "routing_decision": path.value,
+            "latency_breakdown": {
+                "council_phase_ms": int(council_duration),
+                "disagreement_analysis_ms": int(analysis_duration),
+                "judge_phase_ms": int(judge_duration),
+                "total_ms": int(total_duration)
+            },
+            "explanation": disagreement_result["explanation"],
+            "synthesized_answer": router_result.get("synthesized_answer", ""),
+            "consensus_points": router_result.get("consensus_points", []),
+            "disagreement_points": router_result.get("disagreement_points", []),
+            "reasoning_trace": router_result.get("reasoning_trace"),
+            "knowledge_gaps": router_result.get("knowledge_gaps", []),
+            "verification_needed": router_result.get("verification_needed", []),
+            "confidence_reasoning": router_result.get("confidence_reasoning"),
+            "synthesis_mode": router_result.get("synthesis_mode")
+        }
 
     async def _research_with_agent(
         self,
