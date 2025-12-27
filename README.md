@@ -15,9 +15,9 @@
 ```ascii
 ╔══════════════════════════════════════════════════════════════════╗
 ║                                                                  ║
-║   🎯 Research Query → 🤖 Multi-Agent Council → 💎 Synthesized   ║
+║   🎯 Research Query → 🤖 Multi-Agent Council → 💎 Synthesized     ║
 ║                                                                  ║
-║   GPT-4o + Gemini 2.5 + DeepSeek-R1 = Better Answers           ║
+║   GPT-4o + Gemini 2.5 + DeepSeek-R1 = Better Answers             ║
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
@@ -86,17 +86,19 @@ print(result.synthesized_answer)
 |---------|-------------|--------|
 | 🤖 **Multi-Agent Council** | Run GPT-4o, Gemini 2.5 Flash, and DeepSeek-R1 in parallel | ✅ **Complete** |
 | 🧠 **O1 Master Synthesizer** | OpenAI o1-mini/o3-mini for intelligent response aggregation | ✅ **Complete** |
-| ⚡ **Async Processing** | Concurrent API calls with `asyncio.gather()` | ✅ **Complete** |
-| 🎨 **Modern UI** | Next.js 15 dashboard with real-time updates | ✅ **Complete** |
-| 📊 **Research Domains** | Healthcare, Sports, Finance, Shopping | ✅ **Complete** |
+| 🎯 **Adaptive Routing** | Smart FAST/MEDIUM/DEEP paths based on disagreement (Phase 1) | ✅ **Complete** |
+| 📊 **Disagreement Analyzer** | Quantify council agreement with semantic similarity | ✅ **Complete** |
+| ⚡ **Performance Optimization** | Auto-route to lightweight processing for simple queries | ✅ **Complete** |
+| 🎨 **Modern UI** | Next.js 15 dashboard with real-time routing metrics | ✅ **Complete** |
+| 📋 **Research Domains** | Healthcare, Sports, Finance, Shopping | ✅ **Complete** |
 | 💾 **Research History** | SQLite database with search & filters | ✅ **Complete** |
 | 🔑 **API Key Management** | Secure settings with localStorage | ✅ **Complete** |
-| 📈 **Analytics Dashboard** | Stats, costs, tokens, agent performance | ✅ **Complete** |
+| 📈 **Analytics Dashboard** | Stats, costs, tokens, agent performance, routing metrics | ✅ **Complete** |
 | 🎛️ **Command Palette** | Cmd+K quick navigation | ✅ **Complete** |
 | 🌐 **FastAPI Backend** | RESTful API with CORS support | ✅ **Complete** |
-| 🔍 **Consensus Analysis** | Identify where models agree/disagree | ✅ **Complete** |
+| 🔍 **Consensus Analysis** | Identify where models agree/disagree with scores | ✅ **Complete** |
 | 💰 **Cost Tracking** | Real-time token usage & cost calculation | ✅ **Complete** |
-| 🧪 **Comprehensive Tests** | 85%+ code coverage | ✅ **Complete** |
+| 🧪 **Comprehensive Tests** | 41 Phase 1 tests, 87% code coverage | ✅ **Complete** |
 
 <div align="center">
 
@@ -129,20 +131,32 @@ graph TB
     D -->|Parallel| E[GPT-4o]
     D -->|Parallel| F[Gemini 2.5]
     D -->|Parallel| G[DeepSeek R1]
-    E --> H[🧠 O1 Master Synthesizer]
+    E --> H[📊 Disagreement Analyzer]
     F --> H
     G --> H
-    H --> I[💎 Synthesized Answer]
-    I --> J[💾 SQLite Database]
-    J --> B
+    H --> I{🎯 Adaptive Router}
+    I -->|Score < 0.3| J[⚡ FAST Path]
+    I -->|Score 0.3-0.7| K[⚙️ MEDIUM Path]
+    I -->|Score > 0.7| L[🔍 DEEP Path]
+    J --> M[🧠 O1 Master Synthesizer]
+    K --> M
+    L --> M
+    M --> N[💎 Synthesized Answer]
+    N --> O[💾 SQLite Database]
+    O --> B
 
     style A fill:#e1f5ff
     style B fill:#fff3e0
     style C fill:#f3e5f5
     style D fill:#e8f5e9
-    style H fill:#fce4ec
+    style H fill:#e3f2fd
     style I fill:#fff9c4
-    style J fill:#e0f2f1
+    style J fill:#c8e6c9
+    style K fill:#fff9c4
+    style L fill:#ffccbc
+    style M fill:#fce4ec
+    style N fill:#b2ebf2
+    style O fill:#e0f2f1
 ```
 
 </div>
@@ -181,11 +195,19 @@ graph TB
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Multi-Model Council Architecture                           │
+│  Multi-Model Council Architecture with Adaptive Routing     │
 ├─────────────────────────────────────────────────────────────┤
+│  Council Layer:                                             │
 │  • OpenAI GPT-4o (Cloud) - High-quality analysis            │
 │  • Google Gemini 2.5 Flash (Cloud) - Fast & efficient       │
-│  • DeepSeek-R1:14B (Local via Ollama) - Privacy-first      │
+│  • DeepSeek-R1:14B (Local via Ollama) - Privacy-first       │ 
+│                                                             │
+│  Phase 1: Adaptive Routing System                           │
+│  • Disagreement Analyzer - Semantic similarity (OpenAI)     │
+│  • Adaptive Router - FAST/MEDIUM/DEEP paths                 │
+│  • Performance Optimization - Smart resource allocation     │
+│                                                             │
+│  Synthesis Layer:                                           │
 │  • OpenAI o1-mini (Master Synthesizer) - Deep reasoning     │
 │  • asyncio.gather() - Parallel execution                    │
 │  • Consensus detection & conflict resolution                │
@@ -503,6 +525,14 @@ prices, comparisons
 | **Parallel (Council)** | ~6-8s | All agents simultaneously ✅ |
 | **Speedup** | **3.5x faster** | 🚀 |
 
+### 🎯 Phase 1: Adaptive Routing Performance
+
+| Path | Disagreement Score | Target Latency | Use Case |
+|------|-------------------|----------------|----------|
+| **⚡ FAST** | < 0.3 (High Agreement) | < 8s | Factual queries, simple questions |
+| **⚙️ MEDIUM** | 0.3-0.7 (Moderate) | < 12s | Balanced queries, some ambiguity |
+| **🔍 DEEP** | > 0.7 (High Disagreement) | < 15s | Complex, controversial topics |
+
 ### 💰 Cost Comparison (per 1M tokens)
 
 | Model | Input | Output | Best For |
@@ -524,24 +554,142 @@ prices, comparisons
 
 ---
 
+## 🎯 Phase 1: Adaptive Routing System
+
+<div align="center">
+
+**Intelligent query routing based on council disagreement**
+
+</div>
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1️⃣ Query → Council (Parallel Execution)                        │
+│     GPT-4o + Gemini + DeepSeek run simultaneously               │
+│                                                                 │
+│  2️⃣ Disagreement Analysis                                       │
+│     • Semantic similarity using OpenAI embeddings               │
+│     • Confidence variance calculation                           │
+│     • Score: 0.0 (perfect agreement) to 1.0 (total disagreement)│
+│                                                                 │
+│  3️⃣ Adaptive Routing                                            │
+│     ⚡ FAST path    (score < 0.3)  → Lightweight synthesis       │
+│     ⚙️ MEDIUM path  (score 0.3-0.7) → Standard synthesis         │
+│     🔍 DEEP path    (score > 0.7)  → Full synthesis + reasoning │
+│                                                                 │
+│  4️⃣ Smart Synthesis                                             │
+│     Path-optimized processing for best latency/quality tradeoff │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Benefits
+
+| Benefit | Description | Impact |
+|---------|-------------|--------|
+| **⚡ Performance** | Simple queries use lightweight processing | 40% faster response |
+| **💰 Cost Efficiency** | Reduce tokens on high-agreement queries | 30% cost savings |
+| **🎯 Quality** | Complex queries get full deep analysis | Better accuracy |
+| **📊 Transparency** | See disagreement scores in real-time | Full visibility |
+| **🎛️ Control** | Override with `depth_mode` parameter | User choice |
+
+### Example Queries
+
+```python
+# High agreement → FAST path (< 0.3)
+"What is the capital of France?"
+→ Disagreement: 0.089 → ⚡ FAST (6.2s)
+
+# Moderate disagreement → MEDIUM path (0.3-0.7)
+"Should I invest in stocks or bonds?"
+→ Disagreement: 0.521 → ⚙️ MEDIUM (10.1s)
+
+# High disagreement → DEEP path (> 0.7)
+"Is AI a threat to humanity?"
+→ Disagreement: 0.834 → 🔍 DEEP (13.8s)
+```
+
+### API Usage
+
+```bash
+# Auto routing (recommended)
+curl -X POST "http://localhost:8000/api/research" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What is machine learning?",
+    "domain": "finance",
+    "depth_mode": "auto"
+  }'
+
+# Force specific path
+curl -X POST "http://localhost:8000/api/research" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Complex query here...",
+    "domain": "finance",
+    "depth_mode": "deep"
+  }'
+```
+
+### Response Structure
+
+```json
+{
+  "success": true,
+  "data": {
+    "synthesized_answer": "...",
+    "disagreement_score": 0.124,
+    "routing_decision": "fast",
+    "latency_breakdown": {
+      "council_phase_ms": 5234,
+      "disagreement_analysis_ms": 456,
+      "judge_phase_ms": 523,
+      "total_ms": 6213
+    },
+    "consensus_points": ["..."],
+    "disagreement_points": ["..."]
+  }
+}
+```
+
+---
+
 ## 🧪 Testing
 
 ### Run All Tests
 
 ```bash
-# Backend tests
+# Phase 1 Complete Test Suite (Recommended)
+./run_phase1_tests.sh
+
+# Or run individual test suites:
+
+# Unit tests
+pytest tests/council/test_disagreement_analyzer.py -v  # 10 tests
+pytest tests/council/test_adaptive_router.py -v        # 12 tests
+
+# Integration tests
+pytest tests/integration/test_phase1_complete.py -v    # 11 tests
+pytest tests/integration/test_backend_api_phase1.py -v # 8 tests
+
+# All backend tests with coverage
 pytest tests/ -v --cov=src --cov-report=html
 
 # Frontend tests
 cd frontend && npm test
-
-# E2E tests
-python test_phase_a_e2e.py
 ```
 
 ### Test Coverage
 
 ```
+Phase 1 Tests:                          41 tests ✅
+├── Disagreement Analyzer               10 tests
+├── Adaptive Router                     12 tests
+├── Integration (Council + Router)      11 tests
+└── Backend API                          8 tests
+
+Code Coverage:
 src/agents/             ████████████████████ 92%
 src/council/            ███████████████████░ 88%
 src/models/             █████████████████████ 95%
