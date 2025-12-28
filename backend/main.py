@@ -83,11 +83,15 @@ app = FastAPI(
     lifespan=lifespan,
     title="LLM Council API",
     description=(
-        "Backend API for LLM Council - A multi-agent research system that uses "
-        "GPT-4o, Gemini 2.5 Flash, and DeepSeek R1 to provide comprehensive "
-        "research analysis with consensus detection and disagreement analysis."
+        "Backend API for LLM Council - A multi-agent research system with adaptive routing.\n\n"
+        "**Phase 2 Features:**\n"
+        "- Council: GPT-5, Gemini 3 Pro, Gemini 2.5 Pro\n"
+        "- Judge: o3-pro (most intelligent reasoning)\n"
+        "- Jury (DEEP path): Evidence Validator (o3), Logic Auditor (Gemini 2.5 Pro), Assumption Critic (o4-mini)\n"
+        "- Adaptive routing: FAST/MEDIUM/DEEP based on disagreement score\n"
+        "- Comprehensive research with consensus detection, disagreement analysis, and quality validation"
     ),
-    version="1.0.0",
+    version="2.0.0",  # Phase 2
     docs_url="/docs",  # Swagger UI
     redoc_url="/redoc"  # ReDoc UI
 )

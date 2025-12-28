@@ -297,6 +297,16 @@ class ComparisonResult(BaseModel):
         description="Breakdown of latency by phase (council_phase_ms, judge_phase_ms, total_ms)"
     )
 
+    # Phase 2: Jury Layer Results
+    jury_result: Optional[Dict] = Field(
+        default=None,
+        description=(
+            "Jury deliberation results from DEEP path. Contains evidence_validation, "
+            "logic_analysis, assumption_critique, overall_quality_score, critical_issues, "
+            "recommendations, and jury_verdict (approved/needs_revision/rejected)"
+        )
+    )
+
     # Metadata
     timestamp: datetime = Field(
         default_factory=datetime.now,

@@ -188,6 +188,7 @@ class CouncilOrchestrator:
                 - synthesized_answer: str (from router execution)
                 - consensus_points: List[str]
                 - disagreement_points: List[str]
+                - jury_result: Optional[Dict] (Phase 2: jury deliberation, DEEP path only)
         """
         print(f"\n{'='*70}")
         print(f"🏛️  COUNCIL RESEARCH WITH ADAPTIVE ROUTING")
@@ -283,7 +284,8 @@ class CouncilOrchestrator:
             "knowledge_gaps": router_result.get("knowledge_gaps", []),
             "verification_needed": router_result.get("verification_needed", []),
             "confidence_reasoning": router_result.get("confidence_reasoning"),
-            "synthesis_mode": router_result.get("synthesis_mode")
+            "synthesis_mode": router_result.get("synthesis_mode"),
+            "jury_result": router_result.get("jury_result")  # Phase 2: Jury deliberation results (DEEP path only)
         }
 
     async def _research_with_agent(
