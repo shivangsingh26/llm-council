@@ -27,7 +27,7 @@ class AssumptionCritic(BaseJuror):
     - Robustness testing
     """
 
-    def __init__(self, api_key: str, model_name: str = "o4-mini"):
+    def __init__(self, api_key: str, model_name: str = "gpt-4o-mini"):  # Will upgrade to o4-mini when available
         """
         Initialize assumption critic.
 

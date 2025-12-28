@@ -48,7 +48,7 @@ class OpenAIAgent(BaseResearchAgent):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gpt-5",
+        model_name: str = "gpt-4o",  # Will upgrade to gpt-5 when available
         use_tools: bool = True
     ):
         """

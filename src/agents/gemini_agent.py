@@ -50,7 +50,7 @@ class GeminiResearchAgent(BaseResearchAgent):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gemini-3-pro",
+        model_name: str = "gemini-2.0-flash-exp",  # Will upgrade to gemini-3-pro when available
         use_tools: bool = True
     ):
         """

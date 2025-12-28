@@ -26,7 +26,7 @@ class EvidenceValidator(BaseJuror):
     - Hallucination detection
     """
 
-    def __init__(self, api_key: str, model_name: str = "o3"):
+    def __init__(self, api_key: str, model_name: str = "gpt-4o"):  # Will upgrade to o3 when available
         """
         Initialize evidence validator.
 

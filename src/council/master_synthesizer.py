@@ -81,7 +81,7 @@ class MasterSynthesizer:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "o3-pro"
+        model: str = "gpt-4o"  # Will upgrade to o3-pro when available
     ):
         """
         Initialize master synthesizer (Judge).

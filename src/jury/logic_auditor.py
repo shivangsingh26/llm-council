@@ -28,7 +28,7 @@ class LogicAuditor(BaseJuror):
     - Reasoning chain validation
     """
 
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-pro"):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.0-flash-exp"):  # Will upgrade to gemini-2.5-pro when available
         """
         Initialize logic auditor.
 
