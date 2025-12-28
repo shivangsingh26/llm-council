@@ -14,10 +14,20 @@ from typing import Dict, Optional, Literal
 from enum import Enum
 import time
 import logging
+import os
 
 from src.models.schemas import ResearchResponse, ComparisonResult
 
 logger = logging.getLogger(__name__)
+
+# Import Jury orchestrator (lazy import to avoid circular dependencies)
+try:
+    from src.jury.orchestrator import JuryOrchestrator
+    JURY_AVAILABLE = True
+except ImportError:
+    JuryOrchestrator = None
+    JURY_AVAILABLE = False
+    logger.warning("Jury layer not available - install required dependencies")
 
 
 class RoutingPath(str, Enum):
@@ -41,16 +51,33 @@ class AdaptiveRouter:
     FAST_THRESHOLD = 0.3
     DEEP_THRESHOLD = 0.7
 
-    def __init__(self, aggregator=None):
+    def __init__(self, aggregator=None, enable_jury: bool = True):
         """
         Initialize the adaptive router.
 
         Args:
             aggregator: ResponseAggregator instance for synthesis
                        (will be injected by orchestrator)
+            enable_jury: Enable jury layer for DEEP path (default: True)
         """
         self.aggregator = aggregator
-        logger.info("AdaptiveRouter initialized")
+        self.enable_jury = enable_jury and JURY_AVAILABLE
+
+        # Initialize jury orchestrator if enabled
+        if self.enable_jury:
+            try:
+                self.jury = JuryOrchestrator(
+                    openai_api_key=os.getenv("OPENAI_API_KEY"),
+                    google_api_key=os.getenv("GEMINI_API_KEY")
+                )
+                logger.info("AdaptiveRouter initialized with Jury layer enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Jury: {e}")
+                self.jury = None
+                self.enable_jury = False
+        else:
+            self.jury = None
+            logger.info("AdaptiveRouter initialized (Jury layer disabled)")
 
     def determine_path(
         self,
@@ -274,8 +301,7 @@ class AdaptiveRouter:
         Target latency: < 15s total (without jury)
         Target latency: < 30s total (with jury in Phase 2)
         """
-        logger.info("Executing DEEP path (full synthesis)")
-        logger.warning("Note: Jury layer not yet implemented (Phase 2)")
+        logger.info("Executing DEEP path (full synthesis with jury deliberation)")
 
         # Filter valid responses
         valid_responses = {
@@ -290,15 +316,15 @@ class AdaptiveRouter:
                 "consensus_points": [],
                 "disagreement_points": [],
                 "routing_path": "deep",
-                "synthesis_mode": "none"
+                "synthesis_mode": "none",
+                "jury_result": None
             }
 
-        # For now, deep path uses same synthesis as medium
-        # In Phase 2, this will include jury analysis
+        # Step 1: Full synthesis
         if self.aggregator:
             result = await self.aggregator.aggregate(valid_responses, query, domain, routing_path="deep")
 
-            return {
+            synthesis_result = {
                 "synthesized_answer": result.synthesized_answer,
                 "consensus_points": result.consensus_points,
                 "disagreement_points": result.disagreement_points,
@@ -307,9 +333,31 @@ class AdaptiveRouter:
                 "verification_needed": result.verification_needed,
                 "confidence_reasoning": result.confidence_reasoning,
                 "routing_path": "deep",
-                "synthesis_mode": "full",
-                "jury_analysis": "Not yet implemented (Phase 2)"
+                "synthesis_mode": "full"
             }
+
+            # Step 2: Jury deliberation (Phase 2)
+            if self.enable_jury and self.jury:
+                logger.info("🏛️  Invoking jury for deep analysis...")
+                try:
+                    jury_result = await self.jury.deliberate(
+                        query=query,
+                        council_responses=valid_responses,
+                        synthesized_answer=result.synthesized_answer
+                    )
+                    synthesis_result["jury_result"] = jury_result
+                    logger.info(f"✓ Jury verdict: {jury_result.get('jury_verdict')}")
+                except Exception as e:
+                    logger.error(f"Jury deliberation failed: {e}")
+                    synthesis_result["jury_result"] = {
+                        "error": str(e),
+                        "jury_verdict": "error"
+                    }
+            else:
+                logger.warning("Jury layer not available - skipping jury deliberation")
+                synthesis_result["jury_result"] = None
+
+            return synthesis_result
         else:
             # Fallback
             first_response = next(iter(valid_responses.values()))

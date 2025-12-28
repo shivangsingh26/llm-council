@@ -149,6 +149,43 @@ class ResearchResponse(BaseModel):
         }
 
 
+# ============================================================================
+# Jury Schemas (Phase 2)
+# ============================================================================
+
+class JuryValidation(BaseModel):
+    """Evidence validator findings."""
+    claim_id: str
+    evidence_status: str  # "verified" | "unverifiable" | "contradicted"
+    issues: List[str]
+    source_quality_score: float  # 0-1
+
+
+class JuryLogicAnalysis(BaseModel):
+    """Logic auditor findings."""
+    contradictions: List[Dict[str, str]]  # claim conflicts
+    reasoning_gaps: List[str]
+    consistency_score: float  # 0-1
+
+
+class JuryAssumptionCritique(BaseModel):
+    """Assumption critic findings."""
+    hidden_assumptions: List[str]
+    edge_cases: List[str]
+    robustness_score: float  # 0-1
+
+
+class JuryResult(BaseModel):
+    """Combined jury deliberation result."""
+    evidence_validation: Optional[Dict] = None
+    logic_analysis: Optional[Dict] = None
+    assumption_critique: Optional[Dict] = None
+    overall_quality_score: float  # 0-1
+    critical_issues: List[str]
+    recommendations: List[str]
+    jury_verdict: str  # "approved" | "needs_revision" | "rejected"
+
+
 class ComparisonResult(BaseModel):
     """
     Aggregated result from multiple AI agents.
