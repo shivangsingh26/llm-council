@@ -1,7 +1,7 @@
 """
-OpenAI GPT-4o Research Agent
+OpenAI GPT-5 Research Agent
 ============================
-Research agent powered by OpenAI's GPT-4o model (latest SOTA).
+Research agent powered by OpenAI's GPT-5 model (latest flagship model).
 
 Learning Points:
 - Using OpenAI's async client (AsyncOpenAI)
@@ -10,8 +10,8 @@ Learning Points:
 - Token tracking and cost management
 - Error handling with retries
 
-Model: gpt-4o
-Strengths: Fast, versatile, excellent general knowledge, cost-effective
+Model: gpt-5
+Strengths: State-of-the-art reasoning, excellent general knowledge, strong multimodal
 Use case: General research across all domains
 """
 
@@ -28,13 +28,13 @@ from src.tools.finance_api import FinanceAPI
 
 class OpenAIAgent(BaseResearchAgent):
     """
-    Research agent using OpenAI's GPT-4o model.
+    Research agent using OpenAI's GPT-5 model.
 
-    GPT-4o is OpenAI's latest general-purpose model:
-    - Fast inference (~1-2s)
+    GPT-5 is OpenAI's latest flagship model:
+    - Advanced reasoning capabilities
     - Excellent general knowledge
-    - Good at following instructions
-    - Cost-effective ($2.50/1M input tokens)
+    - Strong multimodal understanding
+    - State-of-the-art performance across all domains
 
     Example:
         agent = OpenAIAgent(api_key="sk-...")
@@ -48,15 +48,15 @@ class OpenAIAgent(BaseResearchAgent):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gpt-4o",
+        model_name: str = "gpt-5",
         use_tools: bool = True
     ):
         """
-        Initialize OpenAI GPT-4o research agent.
+        Initialize OpenAI GPT-5 research agent.
 
         Args:
             api_key: OpenAI API key
-            model_name: Model to use (default: gpt-4o)
+            model_name: Model to use (default: gpt-5)
             use_tools: Enable tool augmentation (default: True)
 
         Learning: AsyncOpenAI provides native async support!
@@ -82,7 +82,7 @@ class OpenAIAgent(BaseResearchAgent):
         max_tokens: Optional[int] = 500
     ) -> ResearchResponse:
         """
-        Conduct research using GPT-4o asynchronously with tool augmentation.
+        Conduct research using GPT-5 asynchronously with tool augmentation.
 
         Args:
             query: Research question
@@ -96,7 +96,7 @@ class OpenAIAgent(BaseResearchAgent):
         """
 
         print(f"\n{'='*60}")
-        print(f"🔍 [GPT-4o] Researching: {query}")
+        print(f"🔍 [GPT-5] Researching: {query}")
         print(f"📂 Domain: {domain.value}")
         print(f"{'='*60}")
 
@@ -164,14 +164,14 @@ class OpenAIAgent(BaseResearchAgent):
                 tool_results=tool_results if tool_results else None
             )
 
-            print(f"✅ [GPT-4o] Research completed")
+            print(f"✅ [GPT-5] Research completed")
             print(f"📊 Tokens used: {tokens_used}")
             print(f"📈 Confidence: {research_response.confidence.value}")
 
             return research_response
 
         except Exception as e:
-            print(f"❌ [GPT-4o] Research failed: {e}")
+            print(f"❌ [GPT-5] Research failed: {e}")
             raise
 
     async def _use_finance_tools(self, query: str) -> dict:
@@ -244,7 +244,7 @@ class OpenAIAgent(BaseResearchAgent):
 
     def _construct_research_prompt(self, query: str) -> str:
         """
-        Build the user prompt for GPT-4o.
+        Build the user prompt for GPT-5.
 
         Args:
             query: User's research question
@@ -271,10 +271,10 @@ Format your response clearly with these sections labeled.
 
     def _parse_response(self, response_text: str, query: str) -> dict:
         """
-        Parse GPT-4o's text response into structured data.
+        Parse GPT-5's text response into structured data.
 
         Args:
-            response_text: Raw text from GPT-4o
+            response_text: Raw text from GPT-5
             query: Original query
 
         Returns:

@@ -22,19 +22,19 @@ class LogicAuditor(BaseJuror):
     """
     Jury specialist that audits logical consistency.
 
-    Uses Gemini 2.5 Flash (can be upgraded to Gemini 2.5 Pro later) for:
+    Uses Gemini 2.5 Pro (specialized thinking model for complex reasoning) for:
     - Contradiction detection
     - Consistency verification
     - Reasoning chain validation
     """
 
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-pro"):
         """
         Initialize logic auditor.
 
         Args:
             api_key: Google AI API key
-            model_name: Model to use (default: gemini-2.5-flash)
+            model_name: Model to use (default: gemini-2.5-pro)
         """
         super().__init__(api_key, model_name, JuryRole.LOGIC_AUDITOR)
         self.client = genai.Client(api_key=api_key)

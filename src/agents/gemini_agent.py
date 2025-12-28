@@ -1,7 +1,7 @@
 """
-Gemini Research Agent
-=====================
-Research agent powered by Google's Gemini API
+Gemini 3 Pro Research Agent
+============================
+Research agent powered by Google's Gemini 3 Pro model (state-of-the-art multimodal)
 
 Learning Points:
 - Implementing abstract base classes
@@ -25,20 +25,20 @@ from src.tools.finance_api import FinanceAPI
 
 class GeminiResearchAgent(BaseResearchAgent):
     """
-    Research agent using Google's Gemini model.
+    Research agent using Google's Gemini 3 Pro model.
 
     Inherits from BaseResearchAgent and implements the research() method.
 
-    Why Gemini for this milestone?
-    - Free tier with generous limits
-    - Fast responses (gemini-2.5-flash)
-    - Good quality research capabilities
-    - Simple API
+    Gemini 3 Pro features:
+    - State-of-the-art multimodal reasoning
+    - Frontier intelligence
+    - Large context window (1M tokens)
+    - Excellent performance across all domains
 
     Example:
         agent = GeminiResearchAgent(
             api_key="your-key",
-            model_name="gemini-2.5-flash"
+            model_name="gemini-3-pro"
         )
         result = agent.research(
             "Who won the NBA championship in 2024?",
@@ -50,15 +50,15 @@ class GeminiResearchAgent(BaseResearchAgent):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gemini-2.5-flash",
+        model_name: str = "gemini-3-pro",
         use_tools: bool = True
     ):
         """
-        Initialize Gemini research agent.
+        Initialize Gemini 3 Pro research agent.
 
         Args:
             api_key: Google AI API key
-            model_name: Gemini model to use (default: gemini-2.5-flash)
+            model_name: Gemini model to use (default: gemini-3-pro)
             use_tools: Enable tool augmentation (default: True)
         """
         # Call parent class constructor

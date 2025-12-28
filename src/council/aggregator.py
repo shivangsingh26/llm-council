@@ -497,11 +497,11 @@ if __name__ == "__main__":
                 "Boosts mood and mental health",
                 "Enhances physical fitness"
             ],
-            model_name="gpt-4o",
+            model_name="gpt-5",
             timestamp=datetime.now(),
             tokens_used=500
         ),
-        "gemini-2.5-flash": ResearchResponse(
+        "gemini-3-pro": ResearchResponse(
             query="What are the benefits of exercise?",
             answer="Exercise has numerous benefits including better heart health, improved mood, weight management, and increased energy levels.",
             domain=ResearchDomain.HEALTHCARE,
@@ -512,7 +512,7 @@ if __name__ == "__main__":
                 "Weight management",
                 "Increased energy"
             ],
-            model_name="gemini-2.5-flash",
+            model_name="gemini-3-pro",
             timestamp=datetime.now(),
             tokens_used=450
         )

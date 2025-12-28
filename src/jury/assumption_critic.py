@@ -20,20 +20,20 @@ class AssumptionCritic(BaseJuror):
     """
     Jury specialist that challenges assumptions and finds edge cases.
 
-    Uses GPT-4o (can be upgraded to o4-mini later) for:
+    Uses o4-mini (fast, cost-efficient reasoning model) for:
     - Hidden assumption detection
     - Edge case generation
     - Bias identification
     - Robustness testing
     """
 
-    def __init__(self, api_key: str, model_name: str = "gpt-4o"):
+    def __init__(self, api_key: str, model_name: str = "o4-mini"):
         """
         Initialize assumption critic.
 
         Args:
             api_key: OpenAI API key
-            model_name: Model to use (default: gpt-4o)
+            model_name: Model to use (default: o4-mini)
         """
         super().__init__(api_key, model_name, JuryRole.ASSUMPTION_CRITIC)
         self.client = AsyncOpenAI(api_key=api_key)

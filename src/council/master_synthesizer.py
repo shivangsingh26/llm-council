@@ -1,20 +1,20 @@
 """
-Master Synthesizer using OpenAI o1/o3 Reasoning Models
-========================================================
+Master Synthesizer using OpenAI o3-pro Reasoning Model
+=======================================================
 Replaces rule-based aggregation with deep LLM reasoning.
 
 Key Features:
-- Uses OpenAI o1-mini for fast reasoning
+- Uses OpenAI o3-pro for advanced reasoning (most intelligent)
 - Deep consensus & disagreement analysis
 - Reasoning transparency with chain-of-thought
 - Natural synthesis (not string concatenation)
 - Confidence scoring with explanations
 
 Learning Points:
-- Reasoning models (o1/o3) for synthesis
+- Advanced reasoning models (o3-pro) for synthesis
 - Structured output parsing
 - Advanced prompt engineering
-- Cost-effective reasoning (o1-mini)
+- Extended compute for best quality
 """
 
 from openai import AsyncOpenAI
@@ -34,32 +34,34 @@ from src.models.schemas import (
 
 class MasterSynthesizer:
     """
-    Master orchestrator using OpenAI o1/o3 reasoning models.
+    Master orchestrator using OpenAI o3-pro reasoning model.
 
-    The master agent:
+    The master agent (Judge):
     1. Receives responses from all worker agents
     2. Reasons deeply about consensus and conflicts
     3. Synthesizes a coherent, well-reasoned answer
     4. Provides transparency through reasoning traces
 
-    Why o1/o3 models?
-    - Extended thinking time for complex reasoning
-    - Better at identifying nuanced agreements/disagreements
+    Why o3-pro?
+    - Most intelligent reasoning model with extended compute
+    - Superior at identifying nuanced agreements/disagreements
     - Natural synthesis without explicit instructions
     - Chain-of-thought reasoning built-in
+    - Best quality for critical synthesis decisions
 
     Models available:
-    - o1-mini: Fast reasoning ($3/$12 per 1M tokens) - Default
-    - o1: Deep reasoning ($15/$60 per 1M tokens)
-    - o3-mini: Latest reasoning model (pricing TBD)
+    - o3-pro: Most intelligent reasoning (extended compute) - Default
+    - gpt-5-pro: Alternative flagship model (if latency/cost concern)
+    - o1: Deep reasoning (older generation)
+    - o3-mini: Fast reasoning (lighter alternative)
 
     Example:
         synthesizer = MasterSynthesizer(api_key="sk-...")
         result = await synthesizer.synthesize(
             query="What are AI benefits?",
             responses={
-                "gpt-4o": ResearchResponse(...),
-                "gemini": ResearchResponse(...)
+                "gpt-5": ResearchResponse(...),
+                "gemini-3-pro": ResearchResponse(...)
             }
         )
         print(result.synthesized_answer)
@@ -68,27 +70,28 @@ class MasterSynthesizer:
 
     # Pricing per 1M tokens (input/output)
     PRICING = {
-        "gpt-4o": (2.5, 10.0),  # $2.50/$10.00 per 1M tokens
-        "o1-mini": (3.0, 12.0),
+        "o3-pro": (20.0, 80.0),  # Estimated - extended compute
+        "gpt-5-pro": (10.0, 40.0),  # Estimated
+        "gpt-5": (5.0, 20.0),  # Estimated
         "o1": (15.0, 60.0),
-        "o3-mini": (3.0, 12.0),  # Estimated
+        "o3-mini": (3.0, 12.0),
+        "gpt-4o": (2.5, 10.0),  # Legacy
     }
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gpt-4o"
+        model: str = "o3-pro"
     ):
         """
-        Initialize master synthesizer.
+        Initialize master synthesizer (Judge).
 
         Args:
             api_key: OpenAI API key (or reads from OPENAI_API_KEY env)
-            model: Model to use (gpt-4o, o1-mini, o1, o3-mini)
-                   Default: gpt-4o (o1 models require special access)
+            model: Model to use - Default: o3-pro (most intelligent)
+                   Alternative: gpt-5-pro (if latency/cost is concern)
 
-        Note: o1/o3 models are in beta and may require special access
-              Using gpt-4o provides excellent reasoning at lower cost
+        Note: o3-pro is the most capable reasoning model for synthesis
         """
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
@@ -664,11 +667,11 @@ if __name__ == "__main__":
                     "Boosts mood and mental health",
                     "Enhances physical fitness"
                 ],
-                model_name="gpt-4o",
+                model_name="gpt-5",
                 timestamp=datetime.now(),
                 tokens_used=500
             ),
-            "gemini-2.5-flash": ResearchResponse(
+            "gemini-3-pro": ResearchResponse(
                 query="What are the benefits of exercise?",
                 answer="Exercise has numerous benefits including better heart health, improved mood, weight management, and increased energy levels.",
                 domain=ResearchDomain.HEALTHCARE,
@@ -679,7 +682,7 @@ if __name__ == "__main__":
                     "Weight management",
                     "Increased energy"
                 ],
-                model_name="gemini-2.5-flash",
+                model_name="gemini-3-pro",
                 timestamp=datetime.now(),
                 tokens_used=450
             )

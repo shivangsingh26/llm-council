@@ -20,19 +20,19 @@ class EvidenceValidator(BaseJuror):
     """
     Jury specialist that validates evidence and sources.
 
-    Uses GPT-4o (can be upgraded to o3 later) for:
+    Uses o3 (advanced reasoning model) for:
     - Source verification
     - Citation quality assessment
     - Hallucination detection
     """
 
-    def __init__(self, api_key: str, model_name: str = "gpt-4o"):
+    def __init__(self, api_key: str, model_name: str = "o3"):
         """
         Initialize evidence validator.
 
         Args:
             api_key: OpenAI API key
-            model_name: Model to use (default: gpt-4o)
+            model_name: Model to use (default: o3)
         """
         super().__init__(api_key, model_name, JuryRole.EVIDENCE_VALIDATOR)
         self.client = AsyncOpenAI(api_key=api_key)
