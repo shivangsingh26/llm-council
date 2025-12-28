@@ -166,8 +166,8 @@ class AdaptiveRouter:
 
         # Use aggregator if available, otherwise simple synthesis
         if self.aggregator:
-            # Use existing aggregator for synthesis
-            result = await self.aggregator.aggregate(valid_responses, query, domain)
+            # Use existing aggregator for synthesis with FAST path optimization
+            result = await self.aggregator.aggregate(valid_responses, query, domain, routing_path="fast")
 
             return {
                 "synthesized_answer": result.synthesized_answer,
@@ -228,9 +228,9 @@ class AdaptiveRouter:
                 "synthesis_mode": "none"
             }
 
-        # Use full aggregator synthesis
+        # Use full aggregator synthesis with MEDIUM path optimization
         if self.aggregator:
-            result = await self.aggregator.aggregate(valid_responses, query, domain)
+            result = await self.aggregator.aggregate(valid_responses, query, domain, routing_path="medium")
 
             return {
                 "synthesized_answer": result.synthesized_answer,
@@ -296,7 +296,7 @@ class AdaptiveRouter:
         # For now, deep path uses same synthesis as medium
         # In Phase 2, this will include jury analysis
         if self.aggregator:
-            result = await self.aggregator.aggregate(valid_responses, query, domain)
+            result = await self.aggregator.aggregate(valid_responses, query, domain, routing_path="deep")
 
             return {
                 "synthesized_answer": result.synthesized_answer,

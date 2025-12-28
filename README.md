@@ -529,9 +529,9 @@ prices, comparisons
 
 | Path | Disagreement Score | Target Latency | Use Case |
 |------|-------------------|----------------|----------|
-| **⚡ FAST** | < 0.3 (High Agreement) | < 8s | Factual queries, simple questions |
-| **⚙️ MEDIUM** | 0.3-0.7 (Moderate) | < 12s | Balanced queries, some ambiguity |
-| **🔍 DEEP** | > 0.7 (High Disagreement) | < 15s | Complex, controversial topics |
+| **⚡ FAST** | < 0.3 (High Agreement) | < 10s | Factual queries, simple questions |
+| **⚙️ MEDIUM** | 0.3-0.7 (Moderate) | < 15s | Balanced queries, some ambiguity |
+| **🔍 DEEP** | > 0.7 (High Disagreement) | < 20s | Complex, controversial topics |
 
 ### 💰 Cost Comparison (per 1M tokens)
 

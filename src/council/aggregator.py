@@ -102,7 +102,8 @@ class ResponseAggregator:
         self,
         responses: Dict[str, Optional[ResearchResponse]],
         query: str,
-        domain: ResearchDomain
+        domain: ResearchDomain,
+        routing_path: Optional[str] = None
     ) -> ComparisonResult:
         """
         Aggregate responses from multiple agents into a comparison result.
@@ -115,6 +116,7 @@ class ResponseAggregator:
             responses: Dict mapping model name to response (or None if failed)
             query: The original research question
             domain: Research domain
+            routing_path: Optional routing path (fast/medium/deep) for optimization
 
         Returns:
             ComparisonResult with aggregated analysis
@@ -124,7 +126,7 @@ class ResponseAggregator:
 
         # If master synthesizer is available, use it
         if self.use_master and self.master_synthesizer:
-            return await self._aggregate_with_master(responses, query, domain)
+            return await self._aggregate_with_master(responses, query, domain, routing_path)
 
         # Otherwise, use legacy rule-based aggregation
         return self._aggregate_rule_based(responses, query, domain)
@@ -133,7 +135,8 @@ class ResponseAggregator:
         self,
         responses: Dict[str, Optional[ResearchResponse]],
         query: str,
-        domain: ResearchDomain
+        domain: ResearchDomain,
+        routing_path: Optional[str] = None
     ) -> ComparisonResult:
         """
         Aggregate using master synthesizer (o1-mini).
@@ -175,7 +178,8 @@ class ResponseAggregator:
         return await self.master_synthesizer.synthesize(
             query=query,
             responses=successful_responses,
-            domain=domain
+            domain=domain,
+            routing_path=routing_path
         )
 
     def _aggregate_rule_based(

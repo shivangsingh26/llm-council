@@ -211,8 +211,8 @@ class CouncilOrchestrator:
             print("⚠️  Warning: Fewer than 2 valid responses, skipping routing")
             return {
                 "responses": responses,
-                "disagreement_score": None,
-                "disagreement_details": None,
+                "disagreement_score": 0.0,  # No disagreement with single agent
+                "disagreement_details": {"explanation": "Single agent - no disagreement possible"},
                 "routing_decision": "unknown",
                 "latency_breakdown": {
                     "council_phase_ms": int(council_duration),

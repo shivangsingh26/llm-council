@@ -106,7 +106,8 @@ class MasterSynthesizer:
         query: str,
         responses: Dict[str, ResearchResponse],
         domain: ResearchDomain,
-        context: Optional[Dict] = None
+        context: Optional[Dict] = None,
+        routing_path: Optional[str] = None
     ) -> ComparisonResult:
         """
         Synthesize responses using advanced reasoning.
@@ -123,6 +124,7 @@ class MasterSynthesizer:
             responses: Dict of model_name -> ResearchResponse
             domain: Research domain
             context: Optional context (tools used, research plan, etc.)
+            routing_path: Optional routing path (fast/medium/deep) for optimization
 
         Returns:
             ComparisonResult with deep synthesis and reasoning trace
@@ -157,11 +159,12 @@ class MasterSynthesizer:
             # All agents failed - return empty result
             return self._create_failed_result(query, domain, responses)
 
-        # Build synthesis prompt
+        # Build synthesis prompt (simplified for FAST path)
         prompt = self._build_synthesis_prompt(
             query=query,
             responses=successful_responses,
-            context=context
+            context=context,
+            mode=routing_path
         )
 
         try:
@@ -182,7 +185,13 @@ class MasterSynthesizer:
             # Add temperature and max_tokens for non-o1 models
             if not self.model.startswith("o1") and not self.model.startswith("o3"):
                 api_params["temperature"] = 0.7
-                api_params["max_tokens"] = 4000
+                # Adjust max_tokens based on routing path for latency optimization
+                if routing_path == "fast":
+                    api_params["max_tokens"] = 1500  # FAST: Optimize for speed
+                elif routing_path == "medium":
+                    api_params["max_tokens"] = 2500  # MEDIUM: Balanced
+                else:
+                    api_params["max_tokens"] = 4000  # DEEP or default: Full analysis
 
             response = await self.client.chat.completions.create(**api_params)
 
@@ -242,7 +251,8 @@ class MasterSynthesizer:
         self,
         query: str,
         responses: Dict[str, ResearchResponse],
-        context: Optional[Dict]
+        context: Optional[Dict],
+        mode: Optional[str] = None
     ) -> str:
         """
         Build comprehensive prompt for reasoning model.
@@ -257,11 +267,17 @@ class MasterSynthesizer:
             query: Original research question
             responses: Successful agent responses
             context: Optional context (tools, plan, etc.)
+            mode: Routing path (fast/medium/deep) for prompt optimization
 
         Returns:
             Formatted prompt string
         """
 
+        # Use simplified prompt for FAST path
+        if mode == "fast":
+            return self._build_fast_synthesis_prompt(query, responses, context)
+
+        # Full prompt for MEDIUM/DEEP paths
         prompt_parts = [
             "# Research Synthesis Task",
             f"\n## Original Query\n{query}",
@@ -366,6 +382,57 @@ Provide your response as a JSON object with this exact structure:
 - Explain your reasoning clearly
 - Output ONLY the JSON, no additional text
 """)
+
+        return "\n".join(prompt_parts)
+
+    def _build_fast_synthesis_prompt(
+        self,
+        query: str,
+        responses: Dict[str, ResearchResponse],
+        context: Optional[Dict]
+    ) -> str:
+        """
+        Build simplified prompt for FAST path (high agreement).
+
+        When agents already agree, we don't need deep reasoning -
+        just a quick synthesis that combines their answers.
+
+        Args:
+            query: Original research question
+            responses: Successful agent responses
+            context: Optional context
+
+        Returns:
+            Simplified prompt string
+        """
+
+        prompt_parts = [
+            f"# Quick Synthesis (High Agreement)\n\n## Query: {query}\n\n## Agent Answers:"
+        ]
+
+        # Add each agent's answer concisely
+        for model_name, response in responses.items():
+            prompt_parts.append(f"**{model_name}:** {response.answer}")
+
+        # Simplified instructions
+        prompt_parts.append("""
+## Task
+The agents largely agree. Provide a quick synthesis as JSON:
+
+```json
+{
+  "consensus_points": ["Main point 1", "Main point 2"],
+  "disagreement_points": [],
+  "knowledge_gaps": [],
+  "synthesized_answer": "Brief combined answer (2-3 sentences)",
+  "confidence_range": "high",
+  "confidence_reasoning": "Agents agree",
+  "verification_needed": [],
+  "reasoning_trace": "Quick synthesis due to high agreement"
+}
+```
+
+Keep it concise. Output ONLY the JSON.""")
 
         return "\n".join(prompt_parts)
 

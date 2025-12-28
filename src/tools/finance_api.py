@@ -306,15 +306,32 @@ class FinanceAPI:
 
         # Format based on data type
         if "current_price" in data:
-            # Stock price data
+            # Stock price data with None-safe formatting
+            price = data['current_price'] if data['current_price'] is not None else "N/A"
+            currency = data.get('currency', 'USD')
+            change = data.get('change', 0)
+            change_pct = data.get('change_percent', 0)
+            day_low = data.get('day_low') if data.get('day_low') is not None else "N/A"
+            day_high = data.get('day_high') if data.get('day_high') is not None else "N/A"
+            volume = data.get('volume')
+            market_cap = data.get('market_cap')
+            pe_ratio = data.get('pe_ratio')
+            week_low = data.get('52_week_low') if data.get('52_week_low') is not None else "N/A"
+            week_high = data.get('52_week_high') if data.get('52_week_high') is not None else "N/A"
+
+            # Format numbers safely
+            volume_str = f"{volume:,}" if volume is not None else "N/A"
+            market_cap_str = f"${market_cap:,}" if market_cap is not None else "N/A"
+            pe_ratio_str = f"{pe_ratio:.2f}" if pe_ratio is not None else "N/A"
+
             return f"""📊 **{data['company_name']} ({data['symbol']})**
-Current Price: ${data['current_price']} {data['currency']}
-Change: ${data['change']} ({data['change_percent']:+.2f}%)
-Day Range: ${data['day_low']} - ${data['day_high']}
-Volume: {data['volume']:,}
-Market Cap: ${data['market_cap']:,}
-P/E Ratio: {data['pe_ratio']:.2f}
-52-Week Range: ${data['52_week_low']} - ${data['52_week_high']}
+Current Price: ${price} {currency}
+Change: ${change} ({change_pct:+.2f}%)
+Day Range: ${day_low} - ${day_high}
+Volume: {volume_str}
+Market Cap: {market_cap_str}
+P/E Ratio: {pe_ratio_str}
+52-Week Range: ${week_low} - ${week_high}
 
 Last Updated: {data['last_updated']}"""
 
@@ -327,11 +344,15 @@ Last Updated: {data['last_updated']}"""
             return f"""📰 **Recent News for {data['company_name']}**\n{news_items}"""
 
         elif "indices" in data:
-            # Market summary
-            indices_text = "\n".join([
-                f"• {idx['name']}: {idx['price']} ({idx['change_percent']:+.2f}%)"
-                for idx in data['indices'].values()
-            ])
+            # Market summary with None-safe formatting
+            indices_lines = []
+            for idx in data['indices'].values():
+                price = idx.get('price')
+                change_pct = idx.get('change_percent', 0)
+                price_str = f"{price}" if price is not None else "N/A"
+                indices_lines.append(f"• {idx['name']}: {price_str} ({change_pct:+.2f}%)")
+
+            indices_text = "\n".join(indices_lines)
             return f"""📈 **Market Summary**\n{indices_text}\n\nLast Updated: {data['last_updated']}"""
 
         elif "data_points_count" in data:
