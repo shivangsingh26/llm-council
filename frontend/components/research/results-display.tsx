@@ -165,6 +165,244 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
         </Card>
       )}
 
+      {/* Phase 2: Jury Deliberation Results (DEEP path only) */}
+      {result.jury_result && (
+        <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-transparent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              ⚖️ Jury Deliberation
+              <Badge variant="outline" className="ml-auto">Phase 2</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Verdict and Quality Score */}
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+              <div>
+                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Jury Verdict</h4>
+                <Badge
+                  variant={
+                    result.jury_result.jury_verdict === 'approved'
+                      ? 'default'
+                      : result.jury_result.jury_verdict === 'needs_revision'
+                      ? 'secondary'
+                      : 'destructive'
+                  }
+                  className="text-lg py-1.5 px-4"
+                >
+                  {result.jury_result.jury_verdict === 'approved' && '✓ '}
+                  {result.jury_result.jury_verdict === 'needs_revision' && '⚠ '}
+                  {result.jury_result.jury_verdict === 'rejected' && '✗ '}
+                  {result.jury_result.jury_verdict.toUpperCase().replace('_', ' ')}
+                </Badge>
+              </div>
+              <div className="text-right">
+                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Overall Quality</h4>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-2 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${
+                        result.jury_result.overall_quality_score >= 0.8
+                          ? 'bg-green-500'
+                          : result.jury_result.overall_quality_score >= 0.6
+                          ? 'bg-yellow-500'
+                          : 'bg-red-500'
+                      }`}
+                      style={{ width: `${result.jury_result.overall_quality_score * 100}%` }}
+                    />
+                  </div>
+                  <span className="font-mono font-bold text-lg">
+                    {(result.jury_result.overall_quality_score * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Critical Issues */}
+            {result.jury_result.critical_issues.length > 0 && (
+              <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+                <h4 className="font-semibold mb-2 text-destructive">Critical Issues</h4>
+                <ul className="space-y-1">
+                  {result.jury_result.critical_issues.map((issue, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground pl-4 border-l-2 border-destructive">
+                      {issue}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            {result.jury_result.recommendations.length > 0 && (
+              <div className="p-4 rounded-lg border border-blue-500/30 bg-blue-500/5">
+                <h4 className="font-semibold mb-2 text-blue-500">Recommendations</h4>
+                <ul className="space-y-1">
+                  {result.jury_result.recommendations.map((rec, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground pl-4 border-l-2 border-blue-500">
+                      {rec}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Jury Specialists */}
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Evidence Validator */}
+              {result.jury_result.evidence_validation && (
+                <Card className="border-green-500/30">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      📋 Evidence Validator
+                      <Badge variant="outline" className="text-xs ml-auto">
+                        {result.jury_result.evidence_validation.model}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Source Quality</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-green-500"
+                            style={{
+                              width: `${result.jury_result.evidence_validation.overall_source_quality * 100}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="font-mono text-xs font-bold">
+                          {(result.jury_result.evidence_validation.overall_source_quality * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Hallucinations</div>
+                      <Badge
+                        variant={
+                          result.jury_result.evidence_validation.citation_hallucinations_detected
+                            ? 'destructive'
+                            : 'default'
+                        }
+                      >
+                        {result.jury_result.evidence_validation.citation_hallucinations_detected
+                          ? '⚠️ Detected'
+                          : '✓ None'}
+                      </Badge>
+                    </div>
+                    {result.jury_result.evidence_validation.validations.length > 0 && (
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Validations</div>
+                        <div className="text-xs font-mono">
+                          {result.jury_result.evidence_validation.validations.length} claim(s) checked
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Logic Auditor */}
+              {result.jury_result.logic_analysis && (
+                <Card className="border-blue-500/30">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      🔍 Logic Auditor
+                      <Badge variant="outline" className="text-xs ml-auto">
+                        {result.jury_result.logic_analysis.model}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Consistency Score</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500"
+                            style={{
+                              width: `${result.jury_result.logic_analysis.consistency_score * 100}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="font-mono text-xs font-bold">
+                          {(result.jury_result.logic_analysis.consistency_score * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Contradictions</div>
+                      <Badge variant={result.jury_result.logic_analysis.contradictions.length > 0 ? 'destructive' : 'default'}>
+                        {result.jury_result.logic_analysis.contradictions.length} found
+                      </Badge>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Circular Reasoning</div>
+                      <Badge
+                        variant={result.jury_result.logic_analysis.circular_reasoning_detected ? 'destructive' : 'default'}
+                      >
+                        {result.jury_result.logic_analysis.circular_reasoning_detected ? '⚠️ Detected' : '✓ None'}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Assumption Critic */}
+              {result.jury_result.assumption_critique && (
+                <Card className="border-purple-500/30">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      🤔 Assumption Critic
+                      <Badge variant="outline" className="text-xs ml-auto">
+                        {result.jury_result.assumption_critique.model}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Robustness Score</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-purple-500"
+                            style={{
+                              width: `${result.jury_result.assumption_critique.robustness_score * 100}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="font-mono text-xs font-bold">
+                          {(result.jury_result.assumption_critique.robustness_score * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Hidden Assumptions</div>
+                      <div className="text-xs font-mono">
+                        {result.jury_result.assumption_critique.hidden_assumptions.length} identified
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Edge Cases</div>
+                      <div className="text-xs font-mono">
+                        {result.jury_result.assumption_critique.edge_cases.length} found
+                      </div>
+                    </div>
+                    {result.jury_result.assumption_critique.bias_detected && (
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Bias Detected</div>
+                        <Badge variant="destructive">
+                          {result.jury_result.assumption_critique.bias_detected.type}
+                        </Badge>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Analysis */}
       <Card>
         <CardHeader>
